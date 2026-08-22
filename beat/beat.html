@@ -1,0 +1,819 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>This Is Revolution — Beat</title>
+<style>
+  :root{--bg:#0a0b0f;--panel:#12141b;--line:#222634;--fg:#e9eaf0;--dim:#7f8496;
+        --acc:#6ee7b7;--hi:#f472b6;--warn:#fbbf24}
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font:15px/1.6 -apple-system,BlinkMacSystemFont,sans-serif;
+       max-width:880px;margin:0 auto;padding:36px 20px 90px}
+  h1{font-size:25px;margin:0 0 3px}
+  .sub{color:var(--dim);font-size:13.5px;margin:0 0 22px}
+  h3{font-size:12px;color:var(--acc);letter-spacing:.07em;text-transform:uppercase;
+     font-weight:600;margin:26px 0 9px}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 17px}
+  .transport{position:sticky;top:0;z-index:9;background:rgba(10,11,15,.95);backdrop-filter:blur(10px);
+             border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:20px;
+             display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+  button{font:600 14px/1 inherit;padding:12px 20px;border:0;border-radius:8px;
+         background:var(--acc);color:#0a0b0f;cursor:pointer}
+  button.ghost{background:#1d2130;color:var(--fg)}
+  button:disabled{opacity:.35;cursor:default}
+  .clock{font:600 13px ui-monospace,Menlo,monospace;color:var(--dim);margin-left:auto}
+  .clock b{color:var(--fg)}
+  .keys{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:8px 0}
+  .k{background:#171b26;border:1px solid var(--line);border-radius:6px;padding:11px 2px;
+     text-align:center;font-size:13px;cursor:pointer;user-select:none}
+  .k.blk{background:#0f121a;color:var(--dim)}
+  .k.on{background:var(--acc);color:#0a0b0f;border-color:var(--acc);font-weight:700}
+  .k:hover{border-color:var(--acc)}
+  .seg{display:flex;gap:5px;margin:8px 0}
+  .seg div{flex:1;background:#171b26;border:1px solid var(--line);border-radius:7px;padding:11px 4px;
+           text-align:center;font-size:13px;cursor:pointer;user-select:none}
+  .seg div.on{background:var(--hi);color:#0a0b0f;border-color:var(--hi);font-weight:600}
+  .form{display:flex;gap:3px;margin:8px 0}
+  .form div{background:#171b26;border:1px solid transparent;border-radius:6px;padding:9px 2px;cursor:pointer;
+            text-align:center;font-size:10.5px;line-height:1.3}
+  .form div.cur{border-color:var(--acc);background:#16241f}
+  .form b{display:block;font-size:11.5px}
+  .form small{color:var(--dim);font-size:9.5px}
+  .bars{display:grid;grid-template-columns:repeat(52,1fr);gap:1px;margin:10px 0 4px;height:26px}
+  .bars i{background:#1a1e29;border-radius:1px;cursor:pointer}
+  .bars:hover i{opacity:.85}
+  .bars i.rap{background:#2b3346}
+  .bars i.now{background:var(--acc)}
+  label.rw{display:flex;align-items:center;gap:9px;font-size:13px;margin:9px 0}
+  label.rw span{color:var(--dim);width:74px;flex:0 0 74px}
+  input[type=range]{flex:1}
+  .val{width:44px;text-align:right;color:var(--dim);font:12px ui-monospace,monospace}
+  .note{font-size:13px;color:var(--dim);margin:9px 0 0}
+  .warn{border-left:3px solid var(--warn);padding-left:12px;color:#d5c9a8;font-size:13.5px;margin:14px 0}
+  code{background:#171b26;padding:2px 6px;border-radius:4px;font-size:12.5px}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}
+  td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+  th{color:var(--dim);font-weight:500;font-size:11.5px}
+  .file{font-size:13px;color:var(--dim)}
+  input[type=file]{font-size:12px;color:var(--dim)}
+</style>
+
+<h1>This Is Revolution — Beat</h1>
+<p class="sub">90 BPM · 52마디 · 하프타임 · 아카펠라 분석에서 나온 제약만으로 설계</p>
+
+<div class="transport">
+  <button id="play">▶︎ Play</button>
+  <button id="stop" class="ghost">■ Stop</button>
+  <label class="file"><input type="checkbox" id="useAc" checked> 아카펠라 함께</label>
+  <button id="test" class="ghost" style="padding:9px 14px;font-size:12.5px">아카펠라만 테스트</button>
+  <span class="clock" id="clock">—</span>
+</div>
+
+<audio id="ac" src="../audio/acapella-cut.wav" preload="auto"></audio>
+
+<p class="note" id="acStat" style="margin:0 0 14px"></p>
+
+<div class="box" id="loadbox" style="display:none">
+  <p class="note" style="margin:0 0 8px">아카펠라를 자동으로 못 읽었습니다. 파일을 직접 선택해 주세요.</p>
+  <input type="file" id="pick" accept="audio/*">
+</div>
+
+<div class="warn">
+  <b>조성은 측정으로 확정하지 못했습니다.</b> 파일이 하이패스되어 기본주파수가 잘려 나갔고,
+  자기상관(D4)과 배음 간격(G3)이 불일치했습니다. 아래 <b>루트 찾기</b>로 직접 확인하세요 —
+  이게 이 페이지의 가장 중요한 기능입니다.
+</div>
+
+<h3>1 · 루트 찾기 — 12개를 다 눌러 보세요</h3>
+<div class="keys" id="keys"></div>
+<div class="seg" id="layer">
+  <div data-l="0">루트만</div>
+  <div data-l="1">루트 + 5도</div>
+  <div data-l="2" class="on">전체 비트</div>
+</div>
+<p class="note">
+  <b>루트만</b>으로 12음을 훑어 가장 편안한 음을 찾고 → <b>+5도</b>로 확인 →
+  <b>전체</b>에서 3도를 넣어 장·단을 판정합니다. 3도를 마지막에 두는 건
+  장3화음 <code>[0,4,7]</code>과 단3화음 <code>[0,3,7]</code>이 반음 하나 차이로 감정이 뒤집히기 때문입니다.
+</p>
+
+<h3>2 · 3·4번째 코드 — 재생 중에 바꿔가며 골라 보세요</h3>
+<div class="seg" id="alt" style="flex-wrap:wrap"></div>
+<p class="note" id="altD"></p>
+
+<h3>3 · 여백 구간 아카펠라 잘라내기</h3>
+<div class="box">
+  <label class="rw" style="margin:0 0 10px"><input type="checkbox" id="muteOn" checked>
+    <span style="width:auto;flex:0 0 auto">잘라낸 아카펠라 사용 (<code>acapella-cut.mp3</code>)</span></label>
+  <div id="cutUI"></div>
+  <p class="note" style="margin-top:10px">
+  ffmpeg으로 <b>106.179s ~ 127.849s</b>(마디 39.80~47.94, 8.14마디)를 잘라낸 파일입니다.
+  양 끝 모두 측정된 저에너지 지점(3.6% / 7.6%)이고, 120ms 페이드가 걸려 있습니다.<br>
+  무손실 WAV로 저장했습니다. 파일에서 직접 측정한 실제 무음 구간은
+  <b>106.127s ~ 127.825s</b>로 지정값과 밀리초 단위로 일치합니다.<br>
+  검증: 마디 41–47은 잔여 레벨 <b>0.00%</b>, 마디 40·48은 경계 부분만 남습니다.
+  잘라낸 마디는 <b>비트가 혼자 채웁니다</b>. 체크를 끄면 원본으로 되돌아갑니다.<br>
+  <b>아웃트로 페이드</b> — 130.000s(마디 48.75)부터 시작해
+  136.900s에 0이 됩니다. 6.90초 선형 페이드라
+  녹음이 25ms 만에 끊기던 문제가 자연스러운 곡 마무리로 바뀝니다.</p>
+</div>
+
+<h3>4 · 잘라내지 않을 경우의 코드 — 어떤 3화음도 맞지 않는 곳</h3>
+<p class="note" style="margin:0 0 8px"><b>위 체크가 켜져 있으면 이 선택은 소리에 영향을 주지 않습니다</b> —
+잘라낸 8마디가 여백 구간 전체를 덮기 때문입니다. 원본 파일로 전환했을 때만 적용됩니다.</p>
+<div class="seg" id="void" style="flex-wrap:wrap"></div>
+<p class="note" id="voidD"></p>
+<p class="note">2마디 창으로 재보면 이 구간엔 <b>맞는 3화음이 없습니다</b> —
+42–43마디에서 Gm은 3.7%(전 구간 최악), 44–45마디에서 Dm은 12.5%(최악)이고,
+상위 음이 C♯·E♭·E로 반음 뭉치라 어떤 3화음도 성립하지 않습니다.<br>
+그래서 <b>다른 코드를 찾는 대신 코드가 장·단을 주장하지 않게</b> 만듭니다.
+원문에 따르면 장3화음 <code>[0,4,7]</code>과 단3화음 <code>[0,3,7]</code>은 반음 하나 차이입니다 —
+그 하나를 빼면 어느 쪽도 아니게 되어 보컬의 반음 진행과 부딪히지 않습니다.<br>
+참고로 곡 전체에서도 Dm 평균 적합도는 34.7%뿐입니다. 랩은 원래 화성 함의가 약합니다.</p>
+
+<h3>5 · 레이어 — 각각 껐다 켜며 비교</h3>
+<div class="seg" id="layers" style="flex-wrap:wrap"></div>
+<p class="note" id="layerD"></p>
+
+<h3>6 · 구성 — 랩이 평탄해서 비트가 서사를 만든다 <span style="color:var(--dim);font-weight:400;font-size:11px">· 칸을 누르면 그 자리로 이동</span></h3>
+<div class="form" id="form"></div>
+<div class="bars" id="bars"></div>
+<p class="note">진한 칸 = 랩이 나오는 마디(측정: 8.68초 = 마디 3.25부터). 밝은 칸 = 현재 위치.</p>
+
+<h3>7 · 밸런스</h3>
+<div class="box">
+  <label class="rw"><span>비트</span><input type="range" id="vBeat" min="0" max="150" value="100"><i class="val" id="vBeatV">100</i></label>
+  <label class="rw"><span>아카펠라</span><input type="range" id="vAc" min="0" max="150" value="100"><i class="val" id="vAcV">100</i></label>
+  <label class="rw"><span>서브</span><input type="range" id="vSub" min="0" max="150" value="100"><i class="val" id="vSubV">100</i></label>
+  <label class="rw"><span>코드</span><input type="range" id="vCh" min="0" max="150" value="100"><i class="val" id="vChV">100</i></label>
+</div>
+
+<h3>8 · 이 비트가 분석에 대응하는 방식</h3>
+<table>
+  <tr><th>측정</th><th>대응</th></tr>
+  <tr><td>90 BPM (자기상관 179.75 = 2×89.875)</td><td>마디 2.6667초, 52마디</td></tr>
+  <tr><td>200Hz 이하 0.3% — 저역이 비어 있음</td><td>서브를 D2(73.4Hz)에 크게. 충돌 0</td></tr>
+  <tr><td>500Hz–1.2kHz 50.3% — 보컬 핵심</td><td>이 대역엔 짧은 스탭만. 지속음 없음</td></tr>
+  <tr><td>랩이 16분 격자에 고르게 분산</td><td>하프타임 — 킥 1박, 스네어 3박. 4-on-floor 없음</td></tr>
+  <tr><td>발화 밀도 90%, 벌스/훅 구분 없음</td><td>8마디마다 비트 쪽에서 변화</td></tr>
+  <tr><td>조성 판정 불가</td><td>5음 음계 기반 + 루트 실시간 변경</td></tr>
+  <tr><td>공백 4곳 (마디 0–3.25, 48.4, 50.4, 51+)</td><td>필을 그 자리에만</td></tr>
+</table>
+
+<script>
+'use strict';
+// ── 원문의 함수 (Music Theory for Programmers)
+const mf    = (n) => 440 * 2 ** ((n - 69) / 12);
+const build = (root, p) => p.reduce((n, s) => [...n, n.at(-1) + s], [root]);
+const MAJOR   = [2,2,1,2,2,2,1];
+const rot     = (a,n)=>[...a.slice(n),...a.slice(0,n)];
+const PHRYG   = rot(MAJOR,2);           // [1,2,2,2,1,2,2] — "프리지안은 스페인풍"
+const AEOL    = rot(MAJOR,5);           // [2,1,2,2,1,2,2] — 자연단조
+const HARM    = [2,1,2,2,1,3,1];        // 화성단음계 — 7음이 C♯ (이끔음)
+const DORIAN  = rot(MAJOR,1);           // [2,1,2,2,2,1,2] — 6음이 B (B♭ 아님)
+
+// ══ 여백 8마디 (보컬이 잘려 나간 구간) ══
+// 여기만 500Hz–1.2kHz가 비어 있다. 다른 데선 쓸 수 없는 것을 여기에 몰아넣는다.
+//   40-41  D 도리안 i        — 배열 회전 하나로 색이 바뀐다
+//   42-43  D 도리안 IV       — 6음이 B라서 Gm이 G major가 된다. 도리안의 시그니처
+//   44-45  D 아이올리안 i     — 어두운 색으로 복귀
+//   46-47  A7 (화성단음계 V7) — 트라이톤 C♯↔G, 마디 48에서 보컬 복귀와 동시에 Dm으로 해결
+const VOID_PLAN = [
+  {mode:DORIAN, deg:1, sev:0}, {mode:DORIAN, deg:1, sev:0},
+  {mode:DORIAN, deg:4, sev:0}, {mode:DORIAN, deg:4, sev:0},
+  {mode:AEOL,   deg:1, sev:0}, {mode:AEOL,   deg:1, sev:0},
+  {mode:HARM,   deg:5, sev:1}, {mode:HARM,   deg:5, sev:1},
+];
+// 훅: 원문 블루스 [3,2,1,1,3,2]. 반음 연속 G–A♭–A 가 "의도적으로 어색한 음".
+const BLUES = [3,2,1,1,3,2];
+const HOOK  = [0,1,2,3,4,2,1,0];                       // D F G A♭ A G F D
+// 같은 여덟 음, 다른 묶음 — 원문: "셋씩 묶느냐 둘씩 묶느냐에 따라 다른 곡이 된다"
+const HOOK_BY2 = [0,1,2,3,4,5,6,7];                    // 4분음표 (2마디)
+const HOOK_BY3 = [0,.75,1.5,2.25,3,3.75,4.5,5.25];     // 점8분 격자 (2마디)
+// 45마디만: A를 1.2:1로 쪼갠다. 정확한 반(0.5)보다 살짝 뒤인 0.545 — 미세하게 튕긴다.
+const HOOK_HI     = [0,1,2,3, 4,4, 2,1,0];             // D F G A♭ | A A G F D
+const HOOK_HI_POS = [0,1,2,3, 4,4.545, 5,6,7];
+const HOOK_ACC_HI = [0,2,4,7];                         // 첫 A만 강세, 둘째는 약하게
+
+// ── 여백(40-47)은 보컬의 음정 세계가 다르다. 측정된 피치클래스:
+//    D 22.7%→9.0% / E♭ 10.6%→20.8% / C♯ 19.5%→23.9%  → 조성 추정 Dm에서 C♯m으로
+//    구성음 적합도: A 39.4% · B♭ 29.4% · E♭ 28.3% · Dm 24.5% · Gm 16.5%(현재, 최악)
+// 2마디 창으로 다시 재보니 40-45에서 어떤 3화음도 맞지 않는다.
+//   42-43  Gm 3.7%(전 구간 최악) / A 50.1%   44-45  Dm 12.5%(최악) / 상위음 C♯ E♭ E
+// 상위 음이 반음 뭉치라 3화음 자체가 성립하지 않는 구간이다.
+// → 다른 코드를 찾는 대신, 코드가 장·단을 주장하지 않게 만든다.
+//   원문: 장3화음 [0,4,7]과 단3화음 [0,3,7]은 반음 하나 차이로 감정이 갈린다.
+//   그 하나를 빼면 어느 쪽도 아니게 되어 보컬의 반음 진행과 부딪히지 않는다.
+const VOID = [
+  { n:'3음 생략', deg:4, mode:AEOL, no3:1, fit:'중립', d:'근음+5도만 (D5·G5). 장·단을 주장하지 않아 충돌하지 않는다' },
+  { n:'코드 없음', deg:4, mode:AEOL, mute:1, fit:'—',  d:'음정 있는 층을 전부 뺀다. 서브·드럼·하이햇만' },
+  { n:'A',       deg:5, mode:HARM, fit:'39.4%', d:'V — C♯(이끔음). 피치클래스 적합도는 최고' },
+  { n:'B♭',      deg:6, mode:AEOL, fit:'29.4%', d:'VI — 자연단조 유지' },
+  { n:'Gm',      deg:4, mode:AEOL, fit:'16.5%', d:'iv — 다른 구간과 동일 (비교용)' },
+];
+let VOID_I = 0;
+
+// ── 여백 구간의 아카펠라는 파일 자체에서 잘라냈다(acapella-cut.wav).
+// 실측 무음 구간 106.177s ~ 127.849s = 21.67초 = 8.13마디 (마디 39.8~47.9).
+// 런타임 볼륨 조절은 쓰지 않는다 — <audio>의 currentTime이 뭉텅이로 갱신돼 페이드가 튄다.
+// 아래 값은 "어느 마디가 비어 있는가"를 비트가 알기 위한 사본이다. 파일과 반드시 일치시킬 것.
+const MUTE = { on:true, vol:false, inT:106.179, outT:127.825, fade:0.05 };
+const NM = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const BLK = [0,1,0,1,0,0,1,0,1,0,1,0];
+
+// ── 3·4번째 코드 후보. 1·2번째는 언제나 i(Dm).
+const ALT = [
+  { n:'iv',   c:'Gm', deg:4, mode:AEOL,  d:'확정 — 어둡고 무겁다' },
+  { n:'VI',   c:'B♭', deg:6, mode:AEOL,  d:'따뜻하고 안정적' },
+  { n:'♭VII', c:'C',  deg:7, mode:AEOL,  d:'모달 · 트인 느낌' },
+  { n:'v',    c:'Am', deg:5, mode:AEOL,  d:'긴장을 유지' },
+  { n:'III',  c:'F',  deg:3, mode:AEOL,  d:'밝게 열린다' },
+  { n:'♭II',  c:'E♭', deg:2, mode:PHRYG, d:'스페인풍 · 이전 버전' },
+  { n:'i',    c:'Dm', deg:1, mode:AEOL,  d:'바꾸지 않음 (1코드)' },
+];
+let ALT_I = 0;
+
+let ROOT = 50;                          // D3
+const OPT = { sev:false, pad:true, ji:true, perc:true };
+const scale  = () => build(ROOT, ALT[ALT_I].mode).slice(0,7);
+// 베이스 접근음: 반음 오프셋을 고정하지 않고 스케일에서 한 음도 아래를 찾는다.
+// (고정 오프셋은 코드가 바뀌면 스케일 밖 음을 만든다 — 이전 버그의 원인)
+const stepBelow = (sc, m) => {
+  const pc = ((m % 12) + 12) % 12;
+  const i = sc.findIndex(n => ((n % 12) + 12) % 12 === pc);
+  if (i < 0) return m - 2;
+  const b = sc[(i + 6) % 7];
+  let d = (((m % 12) - (b % 12)) + 12) % 12;
+  if (d === 0) d = 12;
+  return m - d;
+};
+const degTo  = (sc,i) => sc[((i%7)+7)%7] + Math.floor(i/7)*12;
+const chordOf= (sc,d,sh) => sh.map(s => degTo(sc, d-1+s));
+
+// ── 이 곡의 전부: i → ♭II. 루트가 반음 움직인다.
+//    원문: 반음 16/15는 "두 음이 다투는 소리". 그런데 보이스 리딩 총 이동은 4반음뿐.
+const TRIAD = [0,2,4], SEVENTH = [0,2,4,6];
+// 순정률 단3화음 10:12:15 (+ 단7도 9/5). 원문: "분수가 단순할수록 좋게 들린다"
+const JI = [1, 6/5, 3/2, 9/5], JI_ET = [0, 3, 7, 10];
+// 평균율 보이싱을 순정률로 다시 튜닝한다 (근음 기준, 옥타브는 유지)
+function jiFreqs(voiced, rootMidi){
+  const f0 = mf(rootMidi);
+  return voiced.map(m => {
+    const rel = ((m - rootMidi) % 12 + 12) % 12;
+    let k = JI_ET.indexOf(rel);
+    if (k < 0) k = JI_ET.reduce((b,v,i)=> Math.abs(v-rel)<Math.abs(JI_ET[b]-rel)?i:b, 0);
+    const oct = Math.round((m - rootMidi - JI_ET[k]) / 12);
+    return f0 * JI[k] * 2 ** oct;
+  });
+}
+// 원문: "코드 사이를 가능한 한 가장 짧은 거리로 움직이는 일"
+// 인덱스 대 인덱스로만 맞추면 최소가 아니다 — 성부 배정(순열)까지 탐색해야 한다.
+// Dm→Gm의 경우 15반음이 3반음으로 줄어든다 (D 유지, F→G, A→B♭).
+const permsOf = (n) => { const out=[]; const go=(a,b)=>{ if(!b.length) return out.push(a);
+  b.forEach((x,i)=>go([...a,x], b.filter((_,j)=>j!==i))); }; go([],[...Array(n).keys()]); return out; };
+const PERMS = { 2: permsOf(2), 3: permsOf(3), 4: permsOf(4) };
+const voiceLead = (prev, ch) => {
+  if (!prev || prev.length !== ch.length) return ch.slice();
+  const pcs = ch.map(n => ((n % 12) + 12) % 12);
+  let best = ch.slice(), cost = Infinity;
+  const perms = PERMS[ch.length];
+  if (!perms) return ch.slice();          // 지원하지 않는 성부 수는 그대로 둔다
+  for (const pm of perms){
+    const v = prev.map((pv,k)=> pv + ((((pcs[pm[k]]-pv)%12)+18)%12) - 6);
+    const c = v.reduce((a,x,k)=>a+Math.abs(x-prev[k]),0);
+    if (c < cost){ cost = c; best = v; }
+  }
+  best = best.slice().sort((a,b)=>a-b);
+  const mid = best.reduce((a,b)=>a+b,0)/best.length;   // 옥타브 표류 방지
+  if (mid < 49) best = best.map(x=>x+12);
+  if (mid > 62) best = best.map(x=>x-12);
+  return best;
+};
+
+// ── 베이스 리프: 정지한 근음이 아니라 걷는다 (반음 오프셋, 박 위치, 길이)
+// [위치, 길이, 접근음이면 true] — 실제 음높이는 스케일에서 계산한다
+const BASS_A = [[0,2.0,0],[2.5,.55,0],[3.5,.4,1]];
+const BASS_B = [[0,2.0,0],[2.5,.55,0],[3.75,.35,1]];
+// ── 원문의 아르페지오 패턴. 다만 0.5박이 아니라 점8분(0.75박)으로 민다
+const ARP = [0,1,2,1,0,1,2,1];
+
+// ── 52마디
+// 비트 밀도는 보컬 밀도의 "역"으로 간다.
+// 측정된 마디별 스펙트럼 피크 수(= 동시에 울리는 성분):
+//   4-7 8.2 · 8-23 13.5 · 24-31 14.8 · 32-39 13.0 · 40-47 17.0 · 48+ 4.7
+// 보컬이 가장 붐비는 40-47에서는 '아르페지오만' 뺀다.
+// 하이햇·셰이커는 6kHz 이상이고 아카펠라의 그 대역 점유는 5.2%뿐이라 경쟁하지 않는다.
+// 그걸 빼면 격자를 잡아 줄 층이 사라져 랩과 비트가 따로 논다.
+const FORM = [
+  { n:'인트로', bars:4,  vox:'—',    drums:1, bass:1, arp:0, hat:1, pad:1, perc:0, ch:1,   flat2:0, bt:0 },
+  { n:'진입',   bars:4,  vox:'8.2',  drums:1, bass:1, arp:1, hat:1, pad:1, perc:1, ch:1,   flat2:0, bt:0 },
+  { n:'벌스',   bars:16, vox:'13.5', drums:2, bass:1, arp:0, hat:1, pad:1, perc:1, ch:1,   flat2:1, bt:0 },
+  { n:'절제',   bars:8,  vox:'14.8', drums:2, bass:1, arp:0, hat:1, pad:1, perc:0, ch:.7,  flat2:1, bt:0 },
+  { n:'전개',   bars:8,  vox:'13.0', drums:2, bass:1, arp:1, hat:2, pad:1, perc:1, ch:1,   flat2:1, bt:1 },
+  { n:'여백',   bars:8,  vox:'17.0', drums:2, bass:2, arp:0, hat:1, pad:1, perc:1, ch:.7,  flat2:1, bt:0, vd:1 },
+  { n:'해소',   bars:8,  vox:'4.7',  drums:2, bass:1, arp:1, hat:1, pad:1, perc:1, ch:1,   flat2:1, bt:1 },
+];
+const BARS = FORM.reduce((a,f)=>a+f.bars,0);
+const secAt = (b)=>{ let x=b,i=0; for(const f of FORM){ if(x<f.bars) return {f,i,at:x}; x-=f.bars; i++; }
+                     return {f:FORM[FORM.length-1],i:FORM.length-1,at:0}; };
+
+const BPM = 90, BEAT = 60/BPM, BAR = BEAT*4;
+const RAP_START_BAR = 8.68 / BAR;
+const RAP_END_BAR   = 51;               // 아카펠라는 여기서 끝난다 (측정 51~52.5마디)
+
+// 로우패스 스윕. 볼륨을 건드리지 않고 밝기만 바꾸므로 레벨 점프가 생기지 않는다.
+const F_OPEN = 18000, F_IN0 = 300, F_OUT1 = 380;
+const INTRO_BARS = 4, OUT_BARS = 4;                       // 여는 데 4마디, 닫는 데 4마디
+const lerpLog = (a,b,x) => a * Math.pow(b/a, x);
+// 킥은 구간 필터를 우회한다(인트로에서 심장박동을 남기려고). 그런데 아웃트로에서는
+// 나머지가 전부 필터로 사라지는 동안 킥만 풀 레벨로 남아 툭툭 튄다. 같은 곡선으로 물러나게 한다.
+function tailGain(bar){
+  const closeFrom = BARS - OUT_BARS;
+  if (bar < closeFrom) return 1;
+  return Math.max(.12, 1 - (bar - closeFrom + 1) / OUT_BARS * .92);
+}
+function filtAt(bar){                                     // [시작Hz, 끝Hz]
+  if (bar < INTRO_BARS)
+    return [lerpLog(F_IN0, F_OPEN, bar/INTRO_BARS), lerpLog(F_IN0, F_OPEN, (bar+1)/INTRO_BARS)];
+  const closeFrom = BARS - OUT_BARS;
+  if (bar >= closeFrom){
+    const k = bar - closeFrom;
+    return [lerpLog(F_OPEN, F_OUT1, k/OUT_BARS), lerpLog(F_OPEN, F_OUT1, (k+1)/OUT_BARS)];
+  }
+  return [F_OPEN, F_OPEN];
+}
+
+// ══ 오디오 ══
+let ctx, master, filt, sub, subOut, chBus, arpBus, pump, verb, verbGain;
+let timer=null, nextBar=0, t0=0, playing=false, LAYER=2, arpN=0, arpBeat=0, vlPrev=null, acEnd=null, filtPrime=true;
+
+function driveCurve(){ const n=2048,c=new Float32Array(n),k=2.6,t=Math.tanh(k);
+  for(let i=0;i<n;i++){const x=(i/(n-1))*2-1;c[i]=Math.tanh(x*k)/t;} return c; }
+function clipCurve(){ const n=2048,c=new Float32Array(n),k=1.2,t=Math.tanh(k);
+  for(let i=0;i<n;i++){const x=(i/(n-1))*2-1;c[i]=Math.tanh(x*k)/t;} return c; }
+function makeIR(sec,dec){ const L=Math.floor(ctx.sampleRate*sec),ir=ctx.createBuffer(2,L,ctx.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c);
+    for(let i=0;i<L;i++) d[i]=(Math.random()*2-1)*(1-i/L)**dec;} return ir; }
+
+function initAudio(){
+  ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value=-8; comp.ratio.value=3; comp.knee.value=6; comp.attack.value=.003; comp.release.value=.2;
+  const ws = ctx.createWaveShaper(); ws.curve=clipCurve(); ws.oversample='4x';
+  const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=26;
+  master = ctx.createGain(); master.gain.value=1.35;
+  master.connect(hp); hp.connect(comp); comp.connect(ws); ws.connect(ctx.destination);
+
+  // 구간 필터. 킥만 이 앞을 우회해 인트로에서도 심장박동이 남는다.
+  filt = ctx.createBiquadFilter(); filt.type='lowpass'; filt.Q.value=.8;
+  filt.frequency.value = F_OPEN; filt.connect(master);
+  pump = ctx.createGain(); pump.connect(filt);
+  verb = ctx.createConvolver(); verb.buffer = makeIR(1.5,3.4);
+  verbGain = ctx.createGain(); verbGain.gain.value=.15; verb.connect(verbGain); verbGain.connect(filt);
+
+  // 서브 버스: 클린 + 새추레이션 병렬 (저역만으론 작은 스피커에서 음정이 안 들린다)
+  subOut = ctx.createGain(); subOut.gain.value=1; subOut.connect(pump);
+  sub = ctx.createGain();
+  const sHp=ctx.createBiquadFilter(); sHp.type='highpass'; sHp.frequency.value=32;
+  const sDip=ctx.createBiquadFilter(); sDip.type='peaking'; sDip.frequency.value=210; sDip.Q.value=1.1; sDip.gain.value=-3;
+  sub.connect(sHp); sHp.connect(sDip); sDip.connect(subOut);
+  const sPre=ctx.createGain(); sPre.gain.value=3.4;
+  const sDrv=ctx.createWaveShaper(); sDrv.curve=driveCurve(); sDrv.oversample='4x';
+  const sBp=ctx.createBiquadFilter(); sBp.type='bandpass'; sBp.frequency.value=780; sBp.Q.value=.6;
+  const sDg=ctx.createGain(); sDg.gain.value=.46;
+  sHp.connect(sPre); sPre.connect(sDrv); sDrv.connect(sBp); sBp.connect(sDg); sDg.connect(subOut);
+
+  chBus  = ctx.createGain(); chBus.connect(pump);  chBus.connect(verb);
+  arpBus = ctx.createGain(); arpBus.gain.value=1;  arpBus.connect(pump); arpBus.connect(verb);
+}
+
+function tone(o){
+  const g=ctx.createGain(), lp=ctx.createBiquadFilter(), pn=ctx.createStereoPanner();
+  lp.type='lowpass'; lp.Q.value=o.q??.7; lp.frequency.setValueAtTime(o.cut??3000,o.t);
+  if(o.cutEnd) lp.frequency.exponentialRampToValueAtTime(o.cutEnd,o.t+o.dur*(o.ct??1.2));
+  pn.pan.value=o.pan??0;
+  const a=o.a??.01,d=o.d??.12,sn=o.s??.4,r=o.r??.2,pk=o.gain??.1;
+  g.gain.setValueAtTime(0,o.t);
+  g.gain.linearRampToValueAtTime(pk,o.t+a);
+  g.gain.linearRampToValueAtTime(pk*sn,o.t+a+d);
+  g.gain.setValueAtTime(pk*sn,o.t+o.dur);
+  g.gain.linearRampToValueAtTime(0,o.t+o.dur+r);
+  g.connect(lp); lp.connect(pn); pn.connect(o.bus||pump);
+  (o.freqs).forEach(f=>(o.det||[0]).forEach(c=>{
+    const osc=ctx.createOscillator(); osc.type=o.wave||'sawtooth';
+    osc.frequency.value=f; osc.detune.value=c;
+    osc.connect(g); osc.start(o.t); osc.stop(o.t+o.dur+r+.05); }));
+}
+// 덕킹을 킥에서 떼어냈다. 킥에 묶어 두면 드럼이 없는 구간(인트로·아웃트로)에서
+// pump.gain이 1.0에 머물러 코드·베이스가 갑자기 2.4dB 커지고 질감도 달라진다.
+function duck(t,amt){
+  pump.gain.setValueAtTime(amt===undefined?.52:amt,t);
+  pump.gain.linearRampToValueAtTime(1,t+BEAT*.85);
+}
+function kick(t,g){
+  const o=ctx.createOscillator(),gn=ctx.createGain();
+  o.frequency.setValueAtTime(148,t); o.frequency.exponentialRampToValueAtTime(43,t+.11);
+  gn.gain.setValueAtTime(g||1,t); gn.gain.exponentialRampToValueAtTime(.001,t+.34);
+  o.connect(gn); gn.connect(master); o.start(t); o.stop(t+.36);
+}
+function noise(t,len,hz,q,gain,type){
+  const L=Math.floor(ctx.sampleRate*len),b=ctx.createBuffer(1,L,ctx.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<L;i++) d[i]=(Math.random()*2-1)*(1-i/L)**1.6;
+  const s2=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
+  s2.buffer=b; f.type=type||'bandpass'; f.frequency.value=hz; f.Q.value=q; g.gain.value=gain;
+  s2.connect(f); f.connect(g); g.connect(filt); s2.start(t);
+}
+function snare(t,gain){
+  noise(t,.19,1850,.8,gain);
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='triangle'; o.frequency.setValueAtTime(198,t); o.frequency.exponentialRampToValueAtTime(132,t+.09);
+  g.gain.setValueAtTime(gain*.65,t); g.gain.exponentialRampToValueAtTime(.001,t+.12);
+  o.connect(g); g.connect(filt); o.start(t); o.stop(t+.14);
+}
+const hat=(t,g,open)=>noise(t,open?.13:.032,open?7200:9200,.7,g,'highpass');
+
+// ══ 한 마디 ══
+function scheduleBar(bar, t){
+  const {f,at} = secAt(bar % BARS);
+  // 여백 구간의 두 번째 코드는 별도 후보를 쓴다 (보컬 음정이 다르므로)
+  // 실제로 음소거된 마디에서만 비트가 혼자 채운다. 보컬이 돌아오면 여백 처리로 복귀.
+  const barT = (bar % BARS) * BAR + BAR*0.5;          // 마디 중앙
+  const inMute = MUTE.on && barT > MUTE.inT && barT < MUTE.outT;
+  const voidFull = f.vd && inMute;
+  const useVoid = f.vd && !inMute && f.flat2 && (Math.floor(bar/2) % 2 === 1);
+  const sc = build(ROOT, useVoid ? VOID[VOID_I].mode : ALT[ALT_I].mode).slice(0,7);
+  // 4마디 루프: Dm Dm E♭ E♭ — ♭II는 벌스 A부터 등장한다 (도착이 사건이 되도록)
+  let isSecond = f.flat2 && (Math.floor(bar/2) % 2 === 1);
+  // 마지막 4마디는 iv → i 로 종지시킨다.
+  // 2마디 교대를 그대로 두면 곡이 iv(Gm)에서 끝나 해결되지 않는다.
+  // 원문: "I로 끝나면 완결된 느낌, V로 끝나면 계속될 것 같은 느낌."
+  const gbar = bar % BARS;
+  if (gbar >= BARS - 4) isSecond = gbar < BARS - 2;
+  const V = VOID[VOID_I];
+  const vp = voidFull ? VOID_PLAN[at % 8] : null;      // 여백 전용 진행
+  const sc2 = vp ? build(ROOT, vp.mode).slice(0,7) : sc;
+  // 3음을 빼면 [0,4](근음+5도)가 되어 장·단이 미정이 된다
+  const shape = vp ? (vp.sev ? SEVENTH : TRIAD)
+                   : ((useVoid && V.no3) ? [0,4] : (OPT.sev ? SEVENTH : TRIAD));
+  const raw = vp ? chordOf(sc2, vp.deg, shape)
+                 : chordOf(sc, isSecond ? (useVoid ? V.deg : ALT[ALT_I].deg) : 1, shape);
+  const muted = useVoid && V.mute;
+  if ((bar % BARS) === 0) { vlPrev = null; arpN = 0; arpBeat = 0; }
+  const ch = voiceLead(vlPrev, raw); vlPrev = ch;
+  // 보이싱은 전위될 수 있으므로 ch[0]가 근음이 아니다. 베이스는 raw[0]를 쓴다.
+  const bassRoot = raw[0] - 12;
+
+  if (LAYER < 2){                                   // 루트 찾기 모드
+    tone({freqs:[mf(sc[0]-12)], t, dur:BEAT*3.6, wave:'sine', cut:400,
+          a:.02,d:.3,s:.85,r:.4, gain:.5, bus:sub});
+    if (LAYER===1) tone({freqs:[mf(sc[0]+7)], t, dur:BEAT*3.6, wave:'triangle', cut:900,
+          a:.05,d:.3,s:.8,r:.5, gain:.13, bus:chBus});
+    kick(t); if (at%2===1) snare(t+BEAT*2,.22);
+    return;
+  }
+
+  // ── 코드: 사각파. 원문 — "홀수 배음만이라 텅 비고 약간 전자적인 소리"
+  //    순정률을 켜면 배음이 정렬돼 화음이 "잠긴다" (평균율 3도는 15.6센트 어긋나 있다)
+  const cf = OPT.ji ? jiFreqs(ch, raw[0]) : ch.map(mf);
+  if ((f.ch > 0 || voidFull) && !muted)
+    tone({freqs:cf, t, dur:BEAT*1.9, wave:'square', det:[-5,5], cut:1050, q:2.2,
+          a:.02,d:.4,s:.32,r:.5, gain:.075*(voidFull?(at%8<6?.62:1):f.ch), bus:chBus});
+  // 의도적 맥놀이 — 원문: "두 주파수가 가까우면 볼륨이 맥동한다". 1.5Hz = 초당 1.5회
+  if (f.bt && (bar % BARS) < BARS-2)
+    tone({freqs:[cf[0]+0.7], t, dur:BEAT*2.8, wave:'triangle', cut:760,
+          a:.4,d:.5,s:.7,r:.5, gain:.038, bus:chBus});
+
+  // ── 베이스: 걷는다
+  if (f.bass){
+    (isSecond ? BASS_B : BASS_A).forEach(function(e){
+      const n = e[2] ? stepBelow(vp ? sc2 : sc, bassRoot) : bassRoot;
+      tone({freqs:[mf(n)], t:t+e[0]*BEAT, dur:BEAT*e[1], wave:'sine', cut:470,
+            a:.012,d:.28,s:.5,r:.26, gain:.52, bus:sub}); });
+    // 옥타브 아래로 떨구면 36.7Hz라 음정이 아니라 웅 소리만 남는다 → 근음 그대로 강조
+    if (f.bass>1 && at%4===3)
+      tone({freqs:[mf(bassRoot)], t:t+BEAT*3.25, dur:BEAT*.45, wave:'sine', cut:430,
+            a:.008,d:.12,s:.45,r:.16, gain:.44, bus:sub});
+  }
+
+  // ── 훅: 원문의 아르페지오 [0,1,2,1,0,1,2,1]을 점8분(0.75박)으로 민다.
+  //    마디에 묶이지 않아 3마디마다 정박 복귀 → 코드 4마디와 12마디 대순환.
+  //    보컬 핵심대역이지만 음 하나가 0.3박뿐이라 음절 사이로 지나간다.
+  if (f.arp && !voidFull){                          // 여백에선 훅이 혼자 — 아르페지오는 비킨다
+    // 절대 박으로 굴린다. 마디마다 0부터 다시 시작하면 드리프트가 일어나지 않고,
+    // 마디 끝 3.75박 음과 다음 마디 0박 음이 0.25박 간격으로 붙어 코드 전환점에서 부딪힌다.
+    const barStart = (bar % BARS) * 4;
+    if (arpBeat < barStart) arpBeat = barStart;      // 아르페지오가 켜지는 순간 정렬
+    while (arpBeat < barStart + 4){
+      const which = ARP[arpN % ARP.length];
+      const oct = (arpN % 8) >= 6 ? 24 : 12;
+      tone({freqs:[mf(ch[which]+oct)], t:t+(arpBeat-barStart)*BEAT, dur:BEAT*.3, wave:'sawtooth',
+            det:[-6,6], cut:4200, cutEnd:620, ct:1.6, q:4,
+            a:.004,d:.1,s:.12,r:.14, gain:.075,
+            pan:[-.5,-.15,.5,.15][arpN%4], bus:arpBus});
+      arpN++; arpBeat += 0.75;
+    }
+  }
+
+  // ── 여백 전용 훅: 보컬이 없으니 500Hz–1.2kHz를 쓸 수 있는 유일한 구간
+  if (voidFull){
+    const bl = build(ROOT, BLUES).slice(0,6);
+    const seg = at % 8;
+    if (seg < 6){
+      const pair = seg % 2;                              // 훅은 2마디에 걸쳐 한 번
+      const hi   = seg >= 4;                             // 44-45 쌍만 별도 배열
+      const arr  = hi ? HOOK_HI : HOOK;
+      const pos  = hi ? HOOK_HI_POS : (seg < 2 ? HOOK_BY2 : HOOK_BY3);
+      const oct  = hi ? 36 : 24;                         // 44-45는 옥타브 위
+      arr.forEach((idx,k)=>{
+        const b = pos[k] - pair*4;
+        if (b < 0 || b >= 4) return;
+        const acc = hi ? HOOK_ACC_HI.includes(k)
+                       : (pos === HOOK_BY2 ? (k % 2 === 0) : (k % 3 === 0));
+        // 다음 음까지의 간격을 넘지 않게 — 쪼갠 A가 겹치지 않는다
+        const gap = (pos[k+1] !== undefined ? pos[k+1] : pos[k] + 1) - pos[k];
+        tone({freqs:[mf(bl[idx] + oct)], t:t + b*BEAT, dur:BEAT*Math.min(acc?.70:.44, gap*.85),
+              wave:'sawtooth', det:[-7,7], cut:3600, cutEnd:900, ct:1.5, q:3.5,
+              a:.005,d:.12,s:.2,r:.18, gain:acc?.105:.07,
+              pan:((k%3)-1)*.35, bus:arpBus});
+      });
+    } else {
+      // 46-47: A7 위에서 빌드업. 훅을 빼고 16분 하이햇으로 몰아붙인다
+      for(let i=0;i<16;i++) hat(t+i*BEAT/4, .022 + (seg-6)*.012 + i*.0022);
+      if (seg === 7) noise(t+BEAT*2, 1.2, 900, .45, .16);
+    }
+  }
+
+  // ── 저역 패드: 근음+5도. 아카펠라 200-500Hz 점유가 13.6%뿐이라 여기가 비어 있다
+  if (OPT.pad && (f.pad||voidFull) && !muted){
+    const pf = OPT.ji ? jiFreqs([raw[0], raw[0]+7], raw[0]) : [mf(raw[0]), mf(raw[0]+7)];
+    tone({freqs:pf, t, dur:BEAT*3.6, wave:'triangle', det:[-4,4], cut:620, q:1.2,
+          a:.55,d:.6,s:.75,r:.7, gain:.062*(voidFull&&at%8<6?.70:1), bus:chBus});
+  }
+
+  // ── 퍼커션: 16분 3칸마다(1칸 밀어서). 하이햇은 2칸마다 → 원문의 "둘로 묶기 vs 셋으로 묶기"
+  if (OPT.perc && f.perc){
+    for (let i=1; i<16; i+=3) noise(t+i*BEAT/4, .028, 6200, 1.4, .045, 'bandpass');
+    noise(t+BEAT*1.5, .05, 2600, 2.5, .07);           // 림
+    noise(t+BEAT*3.25, .05, 2600, 2.5, .055);
+  }
+
+  // ── 드럼: 하프타임 + 싱코페이션 (4-on-the-floor 아님)
+  // 구간 필터: 볼륨이 아니라 밝기로 진입/퇴장을 만든다.
+  // 매 마디 cancelScheduledValues를 부르면 끝 시각이 t인 직전 램프까지 함께 취소되어
+  // 스윕이 계단으로 바뀐다. 재생/이동 직후 한 번만 값을 잡고, 그 뒤로는 램프만 잇는다.
+  const fr = filtAt(bar % BARS);
+  if (filtPrime){
+    filt.frequency.cancelScheduledValues(t);
+    filt.frequency.setValueAtTime(fr[0], t);
+    filtPrime = false;
+  }
+  filt.frequency.exponentialRampToValueAtTime(fr[1], t + BAR);
+
+  // 덕킹은 구간과 무관하게 늘 같은 자리에 — 레벨과 질감을 일정하게 유지한다
+  const dk = (a)=> 1 - (1-a)*tailGain(bar % BARS);
+  duck(t,dk(.52)); duck(t+BEAT*1.75,dk(.68)); duck(t+BEAT*3.5,dk(.6));
+  const tg = tailGain(bar % BARS);
+  if (f.drums){
+    kick(t,tg);
+    kick(t+BEAT*1.75,.82*tg);
+    kick(t+BEAT*3.5,.9*tg);
+    if (f.drums>2 && at%2===1){ kick(t+BEAT*2.5,.6*tg); duck(t+BEAT*2.5,.7); }
+    if (f.drums>1){ snare(t+BEAT*2,.32*tg); snare(t+BEAT*3.75,.10*tg); }
+  }
+  // 하이햇: 8분은 작게, 점8분(0.75박)마다 악센트 → 3 대 4 무늬
+  if (f.hat){
+    for(let i=0;i<8;i++) hat(t+i*BEAT/2,.026);
+    for(let k2=0;k2*0.75<4;k2++) hat(t+k2*.75*BEAT,.055);
+    if (f.hat>1) for(let i=0;i<4;i++) hat(t+BEAT*3+i*BEAT/4,.02+i*.008);
+    hat(t+BEAT*3.5,.05,true);
+  }
+
+  // ── 필: 측정된 공백에만
+  const gb = bar % BARS;
+  if (gb===7||gb===23||gb===31||gb===39) noise(t+BEAT*3.5,.28,1400,.7,.15);
+  if (gb===47){ noise(t+BEAT*3,.55,1100,.5,.2); hat(t+BEAT*3,.06,true); }
+  if (gb===51) noise(t+BEAT*3.5,.35,1300,.6,.14);          // 아웃트로 진입
+  if (gb===BARS-1) noise(t+BEAT*2,.9,700,.4,.13*tg);          // 마지막 마디, 필터와 함께 사라진다
+}
+// ══ 트랜스포트 ══
+const el = document.getElementById('ac');
+const useAc = () => document.getElementById('useAc').checked && el.readyState>=2;
+
+function tick(){
+  if(!playing) return;
+  const now = ctx.currentTime;
+  let clock;                                   // 아카펠라가 마스터 클럭
+  if (useAc()) {
+    const dur = el.duration || 0;
+    if (el.ended || (dur && el.currentTime >= dur - .06)) {
+      // 보컬이 끝나면 합성 클럭으로 인계 — 아웃트로가 끝까지 연주된다
+      if (acEnd === null) acEnd = now - (dur || el.currentTime);
+      clock = now - acEnd;
+    } else { acEnd = null; t0 = now - el.currentTime; clock = el.currentTime; }
+  } else clock = now - t0;
+  // 끝에서 nextBar를 0으로 되돌리고 break하면, 다음 틱에 루프가 다시 0부터 걸어오면서
+  // 아직 시작 시각이 안 지난 마지막 마디를 또 예약한다(측정 결과 13회 중복).
+  // 곡이 끝나면 nextBar를 BARS에 그대로 두고, 루프 재생일 때만 되감는다.
+  while (true){
+    if (nextBar >= BARS){
+      if (useAc()) break;                                   // 아카펠라와 함께면 곡을 끝낸다
+      nextBar = 0; t0 += BARS*BAR; clock -= BARS*BAR;        // 비트만 재생이면 순환
+    }
+    if (nextBar*BAR >= clock + .7) break;
+    const when = now + (nextBar*BAR - clock);
+    if (when > now - .05) scheduleBar(nextBar, Math.max(when, now+.01));
+    nextBar++;
+  }
+  const b = Math.floor(clock/BAR);
+  document.getElementById('clock').innerHTML =
+    `<b>${String(Math.floor(clock/60)).padStart(1)}:${String(Math.floor(clock%60)).padStart(2,'0')}</b> · 마디 <b>${Math.min(b+1,BARS)}</b>/${BARS}`;
+  document.querySelectorAll('#bars i').forEach((e,i)=>e.classList.toggle('now', i===b%BARS));
+  const s = secAt(Math.min(b,BARS-1));
+  document.querySelectorAll('#form div').forEach((e,i)=>e.classList.toggle('cur', i===s.i));
+}
+
+function play(){
+  if(playing) return;
+  if(!ctx) initAudio();
+  ctx.resume();
+  playing=true; nextBar=0; acEnd=null; filtPrime=true;
+  if (useAc()){
+    el.currentTime=0; t0=ctx.currentTime;
+    el.play().then(()=>acStatus('재생 중')).catch(err=>{
+      acStatus('재생 실패: '+err.name+' — 비트만 재생합니다');
+      document.getElementById('useAc').checked=false; t0=ctx.currentTime+.1;
+    });
+  } else t0=ctx.currentTime+.1;
+  timer=setInterval(tick,60); tick();
+}
+function stop(){
+  playing=false; clearInterval(timer); timer=null;
+  try{ el.pause(); }catch(e){}
+  if(ctx){ const t=ctx.currentTime, lv=1.35*(+document.getElementById('vBeat').value/100);
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(master.gain.value,t);
+    master.gain.linearRampToValueAtTime(0,t+.04);
+    setTimeout(()=>{ if(master) master.gain.setValueAtTime(lv, ctx.currentTime); },140); }
+  document.getElementById('clock').textContent='—';
+  document.querySelectorAll('#bars i').forEach(e=>e.classList.remove('now'));
+}
+document.getElementById('play').onclick=play;
+document.getElementById('stop').onclick=stop;
+
+// ── UI
+document.getElementById('keys').innerHTML = NM.map((n,i)=>
+  `<div class="k${BLK[i]?' blk':''}${i===2?' on':''}" data-k="${i}">${n}</div>`).join('');
+document.querySelectorAll('.k').forEach(e=>e.onclick=()=>{
+  const pc=+e.dataset.k; ROOT = 48 + pc; if (ROOT>55) ROOT-=12;   // C3~G3 근처 유지
+  document.querySelectorAll('.k').forEach(x=>x.classList.toggle('on',x===e));
+});
+// ── 3·4번째 코드 선택
+document.getElementById('alt').innerHTML = ALT.map((a,i)=>
+  `<div data-a="${i}" class="${i===ALT_I?'on':''}" style="flex:0 0 auto;padding:11px 14px">${a.n} ${a.c}</div>`).join('');
+const altDesc = ()=>{ document.getElementById('altD').textContent =
+  `${ALT[ALT_I].n} (${ALT[ALT_I].c}) — ${ALT[ALT_I].d}`; };
+document.querySelectorAll('#alt div').forEach(e=>e.onclick=()=>{
+  ALT_I = +e.dataset.a; vlPrev = null;
+  document.querySelectorAll('#alt div').forEach(x=>x.classList.toggle('on',x===e));
+  altDesc();
+});
+altDesc();
+
+// ── 잘라내기 지점 조절
+const CUTS = { inT:[106.179,'3.6%'], outT:[127.825,'7.6%'] };
+function cutUI(){
+  const B=60/90*4;
+  document.getElementById('cutUI').innerHTML =
+    ['inT','outT'].map(k=>{
+      const lab = k==='inT' ? '시작' : '끝';
+      return `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px">
+        <span style="color:var(--dim);width:34px">${lab}</span>
+        <button class="ghost nud" data-k="${k}" data-d="-0.05" style="padding:6px 11px;font-size:12px">−</button>
+        <b style="width:78px;text-align:center">${MUTE[k].toFixed(3)}s</b>
+        <button class="ghost nud" data-k="${k}" data-d="0.05" style="padding:6px 11px;font-size:12px">+</button>
+        <span style="color:var(--dim)">마디 ${(MUTE[k]/B).toFixed(3)}
+          · 측정 레벨 ${CUTS[k][1]}${Math.abs(MUTE[k]-CUTS[k][0])<1e-6?'':' (조정됨)'}</span>
+      </div>`;}).join('');
+  document.querySelectorAll('.nud').forEach(e=>e.onclick=()=>{
+    MUTE[e.dataset.k]=Math.max(0,MUTE[e.dataset.k]+ +e.dataset.d); cutUI(); });
+  const LEN=[[116.850,'1.6마디','6.5%'],[120.230,'3.3마디','5.2%'],
+             [124.710,'5.0마디','6.4%'],[128.260,'6.3마디','1.9%']];
+  document.getElementById('cutUI').insertAdjacentHTML('beforeend',
+    `<div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;align-items:center">
+      <span style="color:var(--dim);font-size:13px;width:34px">길이</span>
+      ${LEN.map(([t,n,l])=>`<button class="ghost lenb${Math.abs(MUTE.outT-t)<1e-6?' on':''}" data-t="${t}"
+        style="padding:7px 12px;font-size:12px;${Math.abs(MUTE.outT-t)<1e-6?'background:var(--acc);color:#0a0b0f':''}">
+        ${n} <span style="opacity:.6">${l}</span></button>`).join('')}
+    </div>`);
+  document.querySelectorAll('.lenb').forEach(e=>e.onclick=()=>{ MUTE.outT=+e.dataset.t; cutUI(); });
+}
+cutUI();
+document.getElementById('muteOn').onchange=(e)=>{
+  MUTE.on = e.target.checked;
+  const at = el.currentTime, wasPlaying = !el.paused;
+  el.src = MUTE.on ? '../audio/acapella-cut.wav' : '../audio/lil-woodie-wood-this-is-revolution.mp3';
+  el.load();
+  el.addEventListener('loadedmetadata', function once(){
+    el.removeEventListener('loadedmetadata', once);
+    try { el.currentTime = at; } catch(err){}
+    if (wasPlaying) el.play().catch(()=>{});
+  });
+};
+
+// ── 여백 구간 코드 선택
+document.getElementById('void').innerHTML = VOID.map((v,i)=>
+  `<div data-v="${i}" class="${i===VOID_I?'on':''}" style="flex:0 0 auto;padding:11px 15px">${v.n} <span style="opacity:.6;font-size:11px">${v.fit}</span></div>`).join('');
+const voidDesc=()=>{ document.getElementById('voidD').textContent =
+  `${VOID[VOID_I].n} — ${VOID[VOID_I].d}`; };
+document.querySelectorAll('#void div').forEach(e=>e.onclick=()=>{
+  VOID_I=+e.dataset.v; vlPrev=null;
+  document.querySelectorAll('#void div').forEach(x=>x.classList.toggle('on',x===e));
+  voidDesc();
+});
+voidDesc();
+
+// ── 레이어 토글
+const LAYERS = [
+  ['sev', '7화음',   'm7 [0,3,7,10] — 원문 "우수에 찬 느낌". Dm7에 C, Gm7에 F가 더해진다'],
+  ['pad', '저역 패드','근음+5도를 147~294Hz에 길게. 보컬이 비운 대역을 채운다'],
+  ['ji',  '순정률',  '코드를 10:12:15로 튜닝. 평균율 3도는 15.6센트 어긋나 1.58Hz로 맥놀이한다'],
+  ['perc','퍼커션',  '셰이커를 16분 3칸마다. 하이햇은 2칸마다 → 같은 격자, 다른 묶음'],
+];
+document.getElementById('layers').innerHTML = LAYERS.map(([k,n])=>
+  `<div data-k="${k}" class="${OPT[k]?'on':''}" style="flex:0 0 auto;padding:11px 15px">${n}</div>`).join('');
+function layerDesc(k){ const L=LAYERS.find(x=>x[0]===k);
+  document.getElementById('layerD').textContent = L ? L[1]+' — '+L[2] : ''; }
+document.querySelectorAll('#layers div').forEach(e=>e.onclick=()=>{
+  const k=e.dataset.k; OPT[k]=!OPT[k]; e.classList.toggle('on',OPT[k]);
+  if(k==='sev') vlPrev=null;                       // 성부 수가 바뀌면 보이싱 초기화
+  layerDesc(k);
+});
+layerDesc('sev');
+
+// ── 클릭한 자리로 이동
+function seek(bar){
+  bar = Math.max(0, Math.min(BARS-1, Math.floor(bar)));
+  nextBar = bar; arpN = 0; arpBeat = bar*4; vlPrev = null; acEnd = null; filtPrime = true;
+  if (!playing){ play(); }
+  if (useAc()) { try { el.currentTime = bar*BAR; } catch(err){} }
+  else t0 = ctx.currentTime - bar*BAR;
+  nextBar = bar;
+}
+document.getElementById('bars').onclick = (e)=>{
+  const i = [...document.querySelectorAll('#bars i')].indexOf(e.target);
+  if (i >= 0) seek(i);
+};
+document.getElementById('form').onclick = (e)=>{
+  const d = e.target.closest('#form > div'); if(!d) return;
+  const i = [...document.querySelectorAll('#form > div')].indexOf(d);
+  let b = 0; for (let k=0;k<i;k++) b += FORM[k].bars;
+  seek(b);
+};
+
+document.querySelectorAll('#layer div').forEach(e=>e.onclick=()=>{
+  LAYER=+e.dataset.l;
+  document.querySelectorAll('#layer div').forEach(x=>x.classList.toggle('on',x===e));
+});
+document.getElementById('form').innerHTML = FORM.map((f,i)=>
+  `<div style="flex:${f.bars}"><b>${f.n}</b><small>${f.bars}마디 · 보컬 ${f.vox}</small></div>`).join('');
+document.getElementById('bars').innerHTML =
+  Array.from({length:BARS},(_,i)=>`<i class="${i>=RAP_START_BAR&&i<RAP_END_BAR?'rap':''}"></i>`).join('');
+
+const bind=(id,fn)=>{ const s=document.getElementById(id),v=document.getElementById(id+'V');
+  s.oninput=()=>{ v.textContent=s.value; fn(+s.value/100); }; };
+bind('vBeat',x=>{ if(master) master.gain.value=1.35*x; });
+bind('vAc',  x=>{ acBase = x; });
+bind('vSub', x=>{ if(subOut) subOut.gain.value=x; });
+bind('vCh',  x=>{ if(chBus) chBus.gain.value=x; });
+
+const ERRS={1:'ABORTED',2:'NETWORK',3:'DECODE',4:'SRC_NOT_SUPPORTED / 파일을 못 찾음'};
+function acStatus(msg){
+  const st=document.getElementById('acStat');
+  const e=el.error ? ` · <b style="color:var(--hi)">오류 ${el.error.code} ${ERRS[el.error.code]||''}</b>` : '';
+  const d=isFinite(el.duration)&&el.duration ? `${el.duration.toFixed(1)}초` : '—';
+  st.innerHTML = `아카펠라: ${msg} · readyState ${el.readyState} · 길이 ${d}${e}`;
+}
+['loadedmetadata','canplay','playing','pause','error','stalled'].forEach(ev=>
+  el.addEventListener(ev,()=>acStatus(ev==='canplay'?'재생 준비됨':ev)));
+// 아카펠라 볼륨 엔벨로프 — 클릭이 나지 않게 페이드로 끊는다
+let acBase = 1;
+function acVolAt(tt){
+  if (!MUTE.on || !MUTE.vol) return 1;
+  const {inT,outT,fade} = MUTE;
+  if (tt <= inT-fade || tt >= outT+fade) return 1;
+  if (tt >= inT && tt <= outT) return 0;
+  return tt < inT ? (inT-tt)/fade : (tt-outT)/fade;
+}
+setInterval(()=>{ if(el) el.volume = Math.max(0, Math.min(1, acBase * acVolAt(el.currentTime))); }, 15);
+
+el.addEventListener('error',()=>{ document.getElementById('loadbox').style.display='block'; });
+acStatus('로딩 중…');
+document.getElementById('test').onclick=()=>{
+  el.currentTime=0;
+  el.play().then(()=>acStatus('테스트 재생 중 — 소리가 나야 정상'))
+           .catch(err=>acStatus('재생 거부: '+err.name+' — '+err.message));
+};
+document.getElementById('pick').onchange=(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  el.src=URL.createObjectURL(f); el.load();
+  document.getElementById('loadbox').style.display='none';
+};
+</script>

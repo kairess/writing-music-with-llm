@@ -1,0 +1,1271 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>EDM Lab</title>
+<style>
+  :root{--bg:#0b0d12;--panel:#12151d;--line:#232734;--fg:#e9eaf0;--dim:#858a9c;--acc:#7aa2ff;--hi:#ff7ab6;--go:#5ee0c0;--warn:#ffd166}
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+       max-width:900px;margin:0 auto;padding:40px 22px 100px}
+  h1{font-size:27px;margin:0 0 20px}
+  .tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:22px}
+  .tab{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 6px;text-align:center;
+       cursor:pointer;font-size:13px;transition:.1s;user-select:none}
+  .tab b{display:block;font-size:11px;color:var(--dim);letter-spacing:.06em;margin-bottom:3px}
+  .tab:hover{background:#181c26}
+  .tab.on{border-color:var(--acc);background:#1a2030;color:#fff}
+  .tab.on b{color:var(--acc)}
+  .transport{position:sticky;top:0;z-index:9;background:rgba(11,13,18,.94);backdrop-filter:blur(8px);
+             border:1px solid var(--line);border-radius:12px;padding:13px 16px;margin-bottom:24px;
+             display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  button{font:600 14px/1 inherit;padding:12px 22px;border:0;border-radius:8px;background:var(--go);color:#0b0d12;
+         cursor:pointer;min-width:108px;transition:.12s}
+  button.playing{background:var(--hi)}
+  .now{color:var(--dim);font-size:13px;margin-left:auto}
+  .now b{color:var(--fg)}
+  .panel{display:none}
+  .panel.on{display:block}
+  h2{font-size:21px;margin:0 0 4px}
+  .meta{color:var(--dim);font-size:14px;margin:0 0 18px}
+  .quote{border-left:3px solid var(--hi);padding:3px 0 3px 14px;margin:20px 0;color:#b7bac7;font-size:14px}
+  .quote span{color:var(--dim);font-size:12px}
+  .why{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:18px 0;font-size:14px}
+  .why h4{margin:0 0 8px;font-size:13px;color:var(--acc);letter-spacing:.04em;font-weight:600}
+  .ctl{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+  label.sw{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;background:var(--panel);
+           border:1px solid var(--line);padding:9px 14px;border-radius:8px;font-size:13.5px}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px}
+  td,th{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left}
+  th{color:var(--dim);font-weight:500;font-size:12px;letter-spacing:.03em}
+  code{background:#171b24;padding:2px 6px;border-radius:4px;font-size:12.5px}
+  .strip{display:flex;gap:5px;margin:14px 0}
+  .cell2{flex:1;background:var(--panel);border:2px solid transparent;border-radius:7px;padding:11px 3px;
+         text-align:center;font-size:13px;transition:.08s}
+  .cell2 small{display:block;color:var(--dim);font-size:10px;margin-top:2px}
+  .cell2.cur{border-color:var(--acc);background:#1b2130}
+  .cell2.mark{background:#2a2119}.cell2.mark b{color:var(--warn)}
+  .grid16{display:grid;grid-template-columns:52px repeat(16,1fr);gap:3px;margin-bottom:3px;align-items:center}
+  .c{aspect-ratio:1;border-radius:3px;background:#171b24}
+  .c.q{background:#212736}.c.a{background:var(--hi)}.c.ab{background:#fff}
+  .lb{color:var(--dim);font-size:10px;text-align:right;padding-right:4px}
+  .notes{display:flex;gap:5px;margin:12px 0}
+  .n{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:10px 2px;text-align:center;font-size:14px}
+  .n.diff{background:#2a1a24;border-color:var(--hi);color:var(--hi);font-weight:700}
+  .n small{display:block;font-size:10px;color:var(--dim)}
+  .harm{display:flex;align-items:flex-end;gap:2px;height:110px;background:var(--panel);border:1px solid var(--line);
+        border-radius:9px;padding:10px}
+  .hb{flex:1;background:#2c3244;border-radius:2px 2px 0 0;min-height:1px;transition:.12s}
+  .hb.on{background:var(--go)}.hb.odd{background:var(--warn)}
+  .legend{font-size:12.5px;color:var(--dim);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+  .sq{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+  .cap{font-size:13px;color:var(--dim)}
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--dim);font-size:13.5px}
+  footer p{margin:0 0 9px}
+  footer a{color:var(--acc);text-decoration:none;border-bottom:1px solid rgba(122,162,255,.35)}
+  footer a:hover{border-bottom-color:var(--acc)}
+  footer .src{color:#5b6070;font-size:12px;margin-left:8px}
+  footer .tech{color:#5b6070;font-size:12px;margin:0}
+  .langsw{margin-top:14px;font-size:12px}
+  .langsw a{cursor:pointer;border:0;color:#5b6070}
+  .langsw a.on{color:var(--acc);font-weight:600}
+  .langsw i{color:#333844;font-style:normal;margin:0 7px}
+</style>
+
+<h1>EDM Lab</h1>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="transport">
+  <button id="toggle">▶︎ Play</button>
+  <label class="sw" style="border:0;background:transparent;padding:0">
+    BPM <input id="bpm" type="range" min="90" max="145" style="width:110px"><span id="bpmv"></span>
+  </label>
+  <span class="now" id="nowline"></span>
+</div>
+
+<div id="panels"></div>
+
+<footer id="foot"></footer>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════
+//  언어 — URL ?lang= → 저장된 선택 → 브라우저 언어
+// ══════════════════════════════════════════════════════════
+const LANG = (() => {
+  const q = new URLSearchParams(location.search).get('lang');
+  if (q === 'ko' || q === 'en') { try { localStorage.setItem('edmlab.lang', q); } catch (e) {} return q; }
+  let saved = null; try { saved = localStorage.getItem('edmlab.lang'); } catch (e) {}
+  if (saved === 'ko' || saved === 'en') return saved;
+  const nav = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
+  return nav.some((l) => String(l).toLowerCase().startsWith('ko')) ? 'ko' : 'en';
+})();
+document.documentElement.lang = LANG;
+
+const DICT = {
+ko: {
+  title:'EDM Lab', whatItDoes:'이 곡이 하는 일',
+  cycle:(n)=>`${n}마디 순환`, barPos:(b,n)=>`${b}/${n}마디`,
+  footIntro:'스케일·화음·리듬·튜닝에 쓰인 모든 숫자는 아래 글에서 유도한 값입니다.',
+  footTech:'Web Audio API · 라이브러리 없음',
+  bar:(n)=>`${n}마디`, steps:'스텝',
+  v1:{ name:'이끔음', sub:'A단조 · 126 BPM · Am – F – C – G',
+    quote:'V의 B는 I의 근음 C보다 반음 아래에 있어 위로 끌린다 (이끔음). 도미넌트 7화음의 트라이톤은 사용 가능한 가장 불안정한 음정이다.',
+    src:'§코드 진행과 긴장',
+    why:'이 곡은 7개 음 안에서만 움직인다 — 딱 한 마디만 빼고. 8마디마다 VII(G)를 V7(E7)로 바꾸면 <b>G♯</b>이 등장한다. A 자연단조에 없는 유일한 음이고, A를 반음 아래에서 밀어 올린다. 드롭을 필터가 아니라 화성으로 터뜨리는 방법.',
+    ctl:{v7:'이끔음 V7 켜기'},
+    th:['마디 8','구성음','스케일 밖','해결'], none:'없음', loose:'느슨함',
+    res:'G♯→A 반음 상행<br>G♯↔D 트라이톤 6반음' },
+  v2:{ name:'점8분 3:4', sub:'C♯단조 · 124 BPM · C♯m – A – E – B',
+    quote:'음표 뒤의 점은 길이를 1.5배로 만든다. 음표 길이는 2의 거듭제곱이다.',
+    src:'§길이 인코딩',
+    why:'<code>점8분 = 0.5 × 1.5 = 0.75박 = 16분음표 3개</code>. 2의 거듭제곱 격자(마디당 16칸)에 3을 얹으면 자리가 계속 밀리다 <code>LCM(3,16)=48</code>, 즉 <b>3마디마다</b> 다시 맞는다. 코드는 4마디 주기이므로 둘의 최소공배수인 <b>12마디</b>를 가야 완전히 처음으로 돌아온다. 아르페지오는 마디에 묶여 있지 않고 전역 카운터가 마디 경계를 그냥 넘어간다.',
+    ctl:{dot:'점8분(0.75박) — 끄면 평범한 8분'},
+    lg:['4분 강박','점8분 히트','둘이 일치'] },
+  v3:{ name:'모드 회전', sub:'D 루트 고정 · 122 BPM · Dm – ? – Dm – ?',
+    quote:'모드는 배열 회전이다. Ionian이 장조이고 Aeolian이 단조다.',
+    src:'§모드',
+    why:'루트(D), 진행 음도([1,4,1,7]), 멜로디 배열, BPM을 <b>전부 고정</b>하고 <code>rot(MAJOR, n)</code>으로 스케일 배열만 회전시킨다. 도리안은 6음이 반음 높아 <b>IV가 Gm에서 G major로 바뀌고</b>, 프리지안은 2음이 반음 낮아 VII까지 Cm이 된다. 같은 재료가 섹션마다 다른 감정으로 들린다.',
+    ctl:{}, now:'현재',
+    th:['모드','배열','스케일','진행'],
+    modes:{aeolian:'에올리안 (자연단조)', dorian:'도리안', phrygian:'프리지안'} },
+  v4:{ name:'순정률', sub:'F단조 · 118 BPM · Fm – D♭ – A♭ – E♭',
+    quote:'분수가 단순할수록 좋게 들린다 — 배음이 정렬되어 맥놀이 대신 서로를 강화하기 때문. 평균율은 옥타브를 구조적으로 완벽하게 만드는 대신 나머지를 근사한다.',
+    src:'§단순한 비율 / §평균율',
+    why:'평균율에서 5도는 −1.96센트로 거의 완벽하지만 <b>3도는 크게 어긋나 있다</b>(장3도 +13.69, 단3도 −15.64센트). 패드만 순정 비율 <code>10:12:15</code> / <code>4:5:6</code>으로 튜닝하면 배음이 정렬돼 맥놀이가 사라지고 화음이 "잠긴다". 루트는 평균율로 두고 화음 내부만 순정으로 잡는 방식(adaptive JI)이라 조 사이 관계는 유지된다. 리드는 평균율이므로 둘 사이에 미세한 코러스가 자연 발생한다.',
+    ctl:{just:'패드를 순정률로'},
+    th:['코드','순정 비율','평균율 (Hz)','순정률 (Hz)','3음 오차','맥놀이'],
+    cap:'맥놀이 Hz = 그 속도로 소리가 흔들린다는 뜻. Fm의 3음은 초당 3.77번 흔들린다 — 순정률로 바꾸면 그 흔들림이 멈춘다.' },
+  v5:{ name:'배음 모프', sub:'G단조 · 128 BPM · Gm – E♭ – B♭ – F',
+    quote:'배음렬은 기본 주파수의 정수배(1x, 2x, 3x, 4x, 5x…)로 생성된다. 사인 = 단일 주파수 / 사각 = 홀수 배음만(텅 빈) / 톱니 = 모든 배음(버징)',
+    src:'§음색과 배음',
+    why:'필터 스윕이 아니다. <code>createPeriodicWave</code>로 <b>배음을 한 개씩 켠다</b>. 빌드업 8마디는 홀수 배음만(1,3,5…15) 쌓아 사각파처럼 텅 빈 소리를 만들고, 드롭 순간 <b>짝수 배음이 한꺼번에 들어오며</b> 톱니가 된다. 음정은 그대로인데 악기가 바뀐 것처럼 들리는데, 이건 필터로는 만들 수 없다.',
+    ctl:{},
+    build:'빌드업 — 홀수 배음만', drop:'드롭 — 전 배음', hcount:(n)=>`배음 ${n}개`,
+    lg:['홀수 배음 (빌드업)','전 배음 (드롭)','꺼짐'],
+    cap:'아래 숫자 = 그 마디에 살아 있는 배음 개수' },
+  v6:{ name:'19-EDO', sub:'19분할 · 110 BPM · 앰비언트',
+    quote:'5부터 25까지 분할을 전부 테스트해보면, 12가 5도를 약 0.1% 오차로 맞추는 첫 번째 분할이다.',
+    src:'§왜 12음인가',
+    why:'12만 답인 건 아니다. 옥타브를 <b>19등분</b>하면 5도는 조금 나빠지지만(−7.2¢) <b>단3도가 거의 완벽해진다</b>: 순정 315.64¢ 대비 오차 <b>0.15센트</b>. 12-EDO는 15.64센트나 어긋난다. 단조 곡에서 3도는 계속 울리는 음이므로, 이 차이가 화음의 안정감으로 직결된다. 익숙한데 어딘가 다른 소리가 나는 이유.',
+    ctl:{edo19:'19-EDO (끄면 12-EDO)'},
+    th:['음정','순정률','12-EDO','19-EDO'],
+    iv:['완전5도','장3도','단3도','장6도'],
+    cap:'괄호는 순정률 대비 오차. 초록이 더 정확한 쪽. 5도는 12가 이기지만 <b>3도는 19가 압도한다</b>.' },
+  v7:{ name:'7/8 박자', sub:'E단조 · 140 BPM · 2+2+3',
+    quote:'박자표 X/Y에서 X는 마디당 박 수, Y는 박의 기준 음표다. 각 그룹의 첫 박이 강박이다.',
+    src:'§박자표',
+    why:'여기까지 아홉 곡이 전부 4/4였다. 마디를 <b>8분음표 7개</b>로 바꾸고 2+2+3으로 묶으면 강박이 <code>0, 2, 4</code>에 떨어져 4-on-the-floor가 아예 성립하지 않는다. 킥은 1·3그룹 머리, 스네어는 2그룹 머리. 지속 패드를 버리고 말렛 아르페지오로만 화성을 그린다.',
+    ctl:{grp:'2+2+3 (끄면 3+2+2)'},
+    th:['그룹','8분 위치','타악기'], lab:'8분음표 7칸 — 색칠된 칸이 그룹 머리(강박)' },
+  v8:{ name:'블루스 하프타임', sub:'C단조 블루스 · 86 BPM · 하프타임 · 8마디 루프 / 48마디 완곡',
+    quote:'5음 음계는 두 음을 뺀다. 그래서 틀린 음을 짚기가 그토록 어렵고, 모든 초보 기타 강습이 거기서 시작한다. 블루스 스케일은 의도적으로 어색한 음 하나를 도로 집어넣는다.',
+    src:'§다른 스케일 패턴',
+    why:'원문의 블루스 <code>[3,2,1,1,3,2]</code>에서 <b>[1,1]</b>은 반음이 연속으로 붙는다는 뜻 — C에서 <b>F–G♭–G</b>가 그것이다. 단5음 <code>[3,2,2,3,2]</code>에는 없는 이 한 음이 그릿을 만든다. 킥 1박, 스네어 3박의 하프타임이라 4-on-the-floor가 없고 코드는 2마디에 한 번만 바뀐다.<br><br><b>완곡 프리셋</b>은 이 루프를 48마디(2분 14초)로 편다. 지난 시도가 실패한 이유는 구간마다 악기를 <b>빼서</b> 밀도를 흩어놨기 때문이다. 이번엔 반대로 — 베이스·스탭·멜로디·킥은 48마디 내내 그대로 두고, <b>사건만 얹는다</b>. 스네어가 들어오고, 브레이크에서 멜로디가 옥타브 위로 올라가고, 마지막 16마디에서 <b>스탭이 톱니에서 사각파로 바뀐다</b> — 신선함을 끝에 배치했다.',
+    ctl:{f5:'♭5 사용 (끄면 5음 음계)', stab:'스탭 음색 — 사각파 + 트랜지언트',
+         syn:'베이스 싱코페이션 — 점8분 격자', vr:'2마디 변주', vl:'보이스 리딩 (근음 도약 제거)',
+         song:'완곡 (48마디 구성)'},
+    presetTh:'프리셋', presets:['원본','스탭','베이스','변주','보이스 리딩','전부','완곡'],
+    form:['인트로','메인','브레이크','라스트'],
+    fdesc:['스네어 없음','원본 그대로','멜로디 옥타브 위','스탭 → 사각파 · 카운터라인'],
+    songCap:'완곡에서도 베이스·스탭·멜로디·킥은 48마디 내내 동일하다. 바뀌는 건 그 위에 얹히는 것뿐.',
+    diffTh:['옵션','끔','켬'],
+    diffs:[['스탭 음색','톱니 · 뒷박 2회 · 컷 1900→700','사각파(홀수 배음) · 3회 · Q 6 · 트랜지언트'],
+           ['베이스','1박에 한 번, 3.7박 지속','0 · 1.5 · 2.25 · 3.75박 — 전부 0.75 격자'],
+           ['2마디 변주','8마디 내내 동일','짝수/홀수 마디가 다름 · 8마디마다 톰 필'],
+           ['보이스 리딩','근음 위치 (도약 유지)','최소 이동 전위 (도약 제거)']],
+    vlCap:(a,b)=>`한 바퀴 이동량: 근음 위치 <b>${a}반음</b> → 보이스 리딩 <b>${b}반음</b>. 줄어드는 게 이 장르에서 좋은 일인지가 쟁점.` },
+  v9:{ name:'ii–V–I 스윙', sub:'C장조 · 96 BPM · 7화음 · 스윙',
+    quote:'ii-V-I은 재즈의 근간이다. 메이저 7th [0,4,7,11] 재즈 카페 느낌 / 마이너 7th [0,3,7,10] 우수 / 도미넌트 7th [0,4,7,10] 긴장 생성기.',
+    src:'§7화음 / §코드 진행',
+    why:'앞의 곡들은 전부 3화음에 마디당 코드 하나였다. 여기선 <b>7화음</b>을 쓰고 <b>마디당 코드 둘</b>로 화성 리듬을 두 배로 올린다. 3마디의 <b>A7</b>은 C장조에 없는 C♯을 품은 세컨더리 도미넌트(V/ii)다. 8분음표는 균등하게 나누지 않고 <b>2:1</b>로 — 원문의 “점 = 1.5배”를 한 칸 더 민 값이다. 킥 대신 라이드, 지속 베이스 대신 워킹 베이스.',
+    ctl:{swing:'스윙 2:1 (끄면 균등 8분)'},
+    th:['마디','코드','종류','조 밖'], none:'—' },
+  v10:{ name:'배음렬 드론', sub:'A1 기음 · 92 BPM · 코드 진행 없음',
+    quote:'배음렬은 기본 주파수의 정수배(1x, 2x, 3x, 4x, 5x…)로 생성된다. 화음이란 배음이 이미 서로를 강화하는 음들이다.',
+    src:'§음색과 배음',
+    why:'코드 진행이 없다. 55Hz 기음 하나를 두고 <b>몇 번째 배음을 켤지</b>만 16마디에 걸쳐 움직인다 — 화성이 아니라 스펙트럼이 진행한다. 여기엔 12-EDO가 낼 수 없는 음이 들어온다: <b>제7배음 968.83¢</b>(건반보다 31¢ 낮음), <b>제11배음 551.32¢</b>(F와 F♯ 사이). 모든 음이 같은 기음의 정수배라 어긋난 소리가 아니라 <b>완벽히 융합된</b> 소리가 난다. 파형은 순수 사인뿐.',
+    ctl:{snap:'12-EDO로 반올림 (원래 배음과 비교)'},
+    th:['배음','비율','센트','12-EDO 오차'], lit:'켜진 배음' },
+},
+en: {
+  title:'EDM Lab', whatItDoes:'What this track does',
+  cycle:(n)=>`${n}-bar cycle`, barPos:(b,n)=>`bar ${b}/${n}`,
+  footIntro:'Every number in the scales, chords, rhythms and tunings is derived from the article below.',
+  footTech:'Web Audio API · no libraries',
+  bar:(n)=>`Bar ${n}`, steps:'steps',
+  v1:{ name:'Leading Tone', sub:'A minor · 126 BPM · Am – F – C – G',
+    quote:'The B in V sits one semitone below C, the root of I — the leading tone. The tritone inside a dominant seventh is the single most unstable interval available.',
+    src:'§Chord progressions & tension',
+    why:'This track stays inside seven notes — except for one bar. Every eighth bar swaps VII (G) for V7 (E7), which brings in <b>G♯</b>: the only note outside A natural minor, sitting a semitone under A and pushing up into it. The drop lands because of harmony, not because of a filter.',
+    ctl:{v7:'Leading tone (V7) on'},
+    th:['Bar 8','Notes','Outside the scale','Resolution'], none:'none', loose:'loose',
+    res:'G♯→A, up a semitone<br>G♯↔D tritone, 6 semitones' },
+  v2:{ name:'Dotted 8ths 3:4', sub:'C♯ minor · 124 BPM · C♯m – A – E – B',
+    quote:'A dot after a note multiplies its duration by 1.5. Note durations are powers of two.',
+    src:'§Duration encoding',
+    why:'<code>dotted 8th = 0.5 × 1.5 = 0.75 beat = three 16ths</code>. Lay three across a power-of-two grid (16 slots per bar) and the hits keep sliding until <code>LCM(3,16)=48</code> — they realign <b>every three bars</b>. The chords cycle every four, so the whole thing only returns to its starting state after <b>twelve bars</b>. The arpeggio is not bound to the bar: a global counter simply walks across the bar lines.',
+    ctl:{dot:'Dotted 8ths (0.75 beat) — off = plain 8ths'},
+    lg:['Quarter-note downbeat','Dotted-8th hit','Both align'] },
+  v3:{ name:'Mode Rotation', sub:'D root fixed · 122 BPM · Dm – ? – Dm – ?',
+    quote:'Modes are array rotations. Ionian is major and Aeolian is minor.',
+    src:'§Modes',
+    why:'The root (D), the progression degrees ([1,4,1,7]), the melody array and the tempo are <b>all held fixed</b>. Only the scale array rotates, via <code>rot(MAJOR, n)</code>. Dorian raises the 6th, so <b>IV turns from Gm into G major</b>; Phrygian lowers the 2nd and drags VII down to Cm as well. The same material carries a different emotion in every section.',
+    ctl:{}, now:'Now',
+    th:['Mode','Array','Scale','Progression'],
+    modes:{aeolian:'Aeolian (natural minor)', dorian:'Dorian', phrygian:'Phrygian'} },
+  v4:{ name:'Just Intonation', sub:'F minor · 118 BPM · Fm – D♭ – A♭ – E♭',
+    quote:'The simpler the fraction, the better it sounds — the harmonics line up and reinforce each other instead of beating. Equal temperament guarantees perfect octaves by construction and approximates everything else.',
+    src:'§Simple ratios / §Equal temperament',
+    why:'In equal temperament the fifth is near-perfect at −1.96 cents, but <b>the thirds are badly off</b> (major 3rd +13.69, minor 3rd −15.64 cents). Tuning only the pad to the pure ratios <code>10:12:15</code> / <code>4:5:6</code> lines the harmonics up: the beating stops and the chord locks into place. The roots stay in equal temperament and only the intervals inside each chord are made pure (adaptive JI), so the relationships between keys survive. The lead stays tempered, which leaves a faint natural chorus between the two.',
+    ctl:{just:'Tune the pad in just intonation'},
+    th:['Chord','Just ratio','Equal temp. (Hz)','Just (Hz)','3rd error','Beating'],
+    cap:'Beating in Hz is how fast the sound wobbles. The third of Fm wobbles 3.77 times a second — switch to just intonation and the wobble stops.' },
+  v5:{ name:'Harmonic Morph', sub:'G minor · 128 BPM · Gm – E♭ – B♭ – F',
+    quote:'The harmonic series generates overtones at integer multiples of the fundamental (1x, 2x, 3x, 4x, 5x…). Sine is a single frequency; square has odd harmonics only and sounds hollow; sawtooth has all of them and sounds buzzy.',
+    src:'§Timbre & harmonics',
+    why:'This is not a filter sweep. <code>createPeriodicWave</code> switches <b>harmonics on one at a time</b>. The eight-bar build stacks odd harmonics only (1, 3, 5 … 15) for a hollow, square-like tone; at the drop <b>every even harmonic arrives at once</b> and it becomes a sawtooth. The pitch never moves, yet it sounds like a different instrument — which no filter can do.',
+    ctl:{},
+    build:'Build-up — odd harmonics only', drop:'Drop — all harmonics', hcount:(n)=>`${n} harmonics`,
+    lg:['Odd harmonics (build-up)','All harmonics (drop)','Off'],
+    cap:'The number below each bar is how many harmonics are alive in it.' },
+  v6:{ name:'19-EDO', sub:'19 divisions · 110 BPM · ambient',
+    quote:'Testing every division from 5 to 25 shows that twelve is the first one that gets the fifth right to about a tenth of a percent.',
+    src:'§Why twelve notes?',
+    why:'Twelve is not the only answer. Split the octave into <b>19</b> and the fifth gets a little worse (−7.2¢) while <b>the minor third becomes almost exact</b>: 0.15 cents off pure 315.64¢, where 12-EDO misses by 15.64. In a minor-key track the third rings constantly, so that difference turns directly into how settled the harmony feels — familiar, and yet somehow not.',
+    ctl:{edo19:'19-EDO (off = 12-EDO)'},
+    th:['Interval','Just','12-EDO','19-EDO'],
+    iv:['Perfect 5th','Major 3rd','Minor 3rd','Major 6th'],
+    cap:'Brackets show the error against just intonation; green is the more accurate side. Twelve wins on the fifth, but <b>19 wins the thirds outright</b>.' },
+  v7:{ name:'7/8 meter', sub:'E minor · 140 BPM · 2+2+3',
+    quote:'In a time signature X/Y, X is beats per measure and Y is the note value of the beat. The first beat of each group is the strong one.',
+    src:'§Time signature',
+    why:'Nine tracks in, every one has been 4/4. Make the bar <b>seven eighth notes</b> grouped 2+2+3 and the accents land on <code>0, 2, 4</code> — four-on-the-floor cannot exist. Kick on groups 1 and 3, snare on group 2. The sustained pad is gone; harmony is drawn entirely with mallet arpeggios.',
+    ctl:{grp:'2+2+3 (off = 3+2+2)'},
+    th:['Group','Eighth position','Percussion'], lab:'Seven eighth-note slots — filled cells are group heads (accents)' },
+  v8:{ name:'Blues half-time', sub:'C blues · 86 BPM · half-time · 8-bar loop / 48-bar track',
+    quote:'The pentatonic scales drop two notes, which is why it is so hard to play a wrong note in them, and why every beginner guitar lesson starts there. The blues scale adds one deliberately awkward note back in.',
+    src:'§Other scale patterns',
+    why:'In the article’s blues pattern <code>[3,2,1,1,3,2]</code>, the <b>[1,1]</b> means two semitones back to back — in C that is <b>F–G♭–G</b>. That single note, absent from the pentatonic <code>[3,2,2,3,2]</code>, is the grit. Kick on 1, snare on 3: half-time, no four-on-the-floor, and the chord changes only every two bars.<br><br>The <b>full-track preset</b> stretches this loop to 48 bars (2:14). An earlier attempt failed because each section <b>removed</b> instruments, scattering the density. This one does the opposite — bass, stabs, melody and kick stay identical for all 48 bars and only <b>events are added on top</b>. The snare arrives, the break lifts the melody an octave, and in the final sixteen bars <b>the stabs switch from saw to square</b> — the fresh thing is placed at the end.',
+    ctl:{f5:'Use ♭5 (off = pentatonic)', stab:'Stab timbre — square wave + transient',
+         syn:'Bass syncopation — dotted-eighth grid', vr:'Two-bar variation', vl:'Voice leading (removes root leaps)',
+         song:'Full track (48-bar form)'},
+    presetTh:'Presets', presets:['Original','Stabs','Bass','Variation','Voice leading','All','Full track'],
+    form:['Intro','Main','Break','Last'],
+    fdesc:['no snare','the original, unchanged','melody up an octave','stabs → square · counter-line'],
+    songCap:'Even in the full track, bass, stabs, melody and kick are identical across all 48 bars. Only what sits on top changes.',
+    diffTh:['Switch','Off','On'],
+    diffs:[['Stab timbre','Saw · twice off-beat · cut 1900→700','Square (odd harmonics) · 3× · Q 6 · transient'],
+           ['Bass','once on beat 1, held 3.7 beats','0 · 1.5 · 2.25 · 3.75 — all on the 0.75 grid'],
+           ['Two-bar variation','identical for all 8 bars','odd and even bars differ · tom fill every 8'],
+           ['Voice leading','root position (leaps kept)','nearest inversion (leaps removed)']],
+    vlCap:(a,b)=>`Motion per loop: root position <b>${a} semitones</b> → voice leading <b>${b}</b>. Whether less motion is a good thing in this genre is the question.` },
+  v9:{ name:'ii–V–I swing', sub:'C major · 96 BPM · 7th chords · swing',
+    quote:'ii-V-I is the backbone of jazz. Major 7th [0,4,7,11] jazz-cafe / minor 7th [0,3,7,10] melancholic / dominant 7th [0,4,7,10] tension generator.',
+    src:'§Seventh chords / §Chord progressions',
+    why:'Every track so far used plain triads, one per bar. This one uses <b>seventh chords</b> and <b>two per bar</b>, doubling the harmonic rhythm. The <b>A7</b> in bar 3 is a secondary dominant (V/ii) carrying a C♯ that C major does not own. Eighth notes are not split evenly but <b>2:1</b> — one notch past the article’s “a dot multiplies by 1.5”. Ride instead of kick, walking bass instead of a held root.',
+    ctl:{swing:'Swing 2:1 (off = even eighths)'},
+    th:['Bar','Chord','Type','Outside key'], none:'—' },
+  v10:{ name:'Harmonic drone', sub:'A1 fundamental · 92 BPM · no progression',
+    quote:'The harmonic series generates overtones at integer multiples of the fundamental (1x, 2x, 3x, 4x, 5x…). Chords are notes whose overtones already reinforce each other.',
+    src:'§Timbre and harmonics',
+    why:'There is no chord progression. One 55 Hz fundamental stays put and only <b>which harmonics are lit</b> moves across sixteen bars — the spectrum progresses, not the harmony. That admits pitches 12-EDO cannot produce: the <b>7th harmonic at 968.83¢</b> (31¢ below the key) and the <b>11th at 551.32¢</b> (between F and F♯). Because every tone is an integer multiple of the same fundamental, the result does not sound out of tune — it sounds <b>fused</b>. Pure sines only.',
+    ctl:{snap:'Snap to 12-EDO (compare against true harmonics)'},
+    th:['Harmonic','Ratio','Cents','12-EDO error'], lit:'lit harmonics' }
+}};
+const S = DICT[LANG];
+document.title = S.title;
+
+// ══════════════════════════════════════════════════════════
+//  원문의 핵심 함수 — 모든 곡이 이것만 쓴다
+// ══════════════════════════════════════════════════════════
+const mf    = (n) => 440 * 2 ** ((n - 69) / 12);          // midiToFreq
+const build = (root, p) => p.reduce((n, s) => [...n, n.at(-1) + s], [root]);
+const rot   = (a, n) => [...a.slice(n), ...a.slice(0, n)];
+const MAJOR = [2, 2, 1, 2, 2, 2, 1];
+const MODES = { ionian: rot(MAJOR,0), dorian: rot(MAJOR,1), phrygian: rot(MAJOR,2),
+                lydian: rot(MAJOR,3), mixolydian: rot(MAJOR,4), aeolian: rot(MAJOR,5), locrian: rot(MAJOR,6) };
+const scaleOf = (root, mode) => build(root, mode).slice(0, 7);
+const degTo   = (sc, i) => sc[((i % 7) + 7) % 7] + Math.floor(i / 7) * 12;
+const chordOf = (sc, deg, shape = [0, 2, 4]) => shape.map((s) => degTo(sc, deg - 1 + s));
+const NM_S = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const NM_F = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+let FLAT = false;
+const nm = (n) => (FLAT ? NM_F : NM_S)[((n % 12) + 12) % 12];
+const quality = (c) => { const a = c[1]-c[0], b = c[2]-c[1];
+  return a===4&&b===3?'':a===3&&b===4?'m':a===3&&b===3?'°':'+'; };
+const cname = (c) => nm(c[0]) + quality(c);
+
+// ══════════════════════════════════════════════════════════
+//  공용 오디오 엔진
+// ══════════════════════════════════════════════════════════
+let ctx, master, comp, shaper, out, hpf, IR;
+let sess = null, pump = null, verb = null, verbGain = null, tonal = null, subBus = null;
+const TONAL_GAIN  = 1.28;     // 음(비타악기) 버스 — 타악기 대비 음의 크기
+const MASTER_GAIN = 2.0;      // 전체 음량 — 크게/작게 하려면 이 값만 바꾸면 된다
+const MAKEUP_GAIN = 1.0;      // 리미터 뒤 보정 (1.0 초과 시 클리핑 가능)
+const SUB_LEVEL   = 0.62;     // 베이스 전체 음량 — 이 값 하나로 베이스만 조절된다
+const SUB_DRIVE   = 0.55;     // 베이스 배음 레이어 — 작은 스피커에서 음정이 들리게 하는 양
+const SUB_DIP     = -4;       // 200Hz 부근(웅 거리는 대역) 감쇠 dB
+
+function makeIR(sec, decay) {
+  const len = Math.floor(ctx.sampleRate * sec), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * (1 - i/len) ** decay; }
+  return ir;
+}
+let DRIVE_CURVE = null;
+// 베이스 새추레이션 곡선 — 정수배 배음을 만들어 낸다 (원문 §배음)
+function makeDriveCurve() {
+  const n = 4096, c = new Float32Array(n), k = 2.6, norm = Math.tanh(k);
+  for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; c[i] = Math.tanh(x * k) / norm; }
+  return c;
+}
+// tanh 소프트 클리퍼 — 하드 클리핑(찢어지는 소리) 대신 피크를 부드럽게 누른다
+function makeSoftClip() {
+  const n = 4096, curve = new Float32Array(n), k = 1.2, norm = Math.tanh(k);
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    curve[i] = Math.tanh(x * k) / norm;
+  }
+  const ws = ctx.createWaveShaper();
+  ws.curve = curve; ws.oversample = '4x';
+  return ws;
+}
+function initAudio() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  // master → comp(리미터) → softclip → out → 스피커
+  comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -6; comp.ratio.value = 3; comp.knee.value = 6;
+  comp.attack.value = .003; comp.release.value = .2;
+  master = ctx.createGain(); master.gain.value = MASTER_GAIN;
+  hpf = ctx.createBiquadFilter();                     // 들리지도 않는 초저역 제거
+  hpf.type = 'highpass'; hpf.frequency.value = 28; hpf.Q.value = .6;
+  shaper = makeSoftClip();
+  out = ctx.createGain(); out.gain.value = MAKEUP_GAIN;
+  master.connect(hpf); hpf.connect(comp); comp.connect(shaper); shaper.connect(out); out.connect(ctx.destination);
+  IR = makeIR(2.6, 2.4);
+  DRIVE_CURVE = makeDriveCurve();
+}
+// 재생 1회 = 세션 1개. 모든 보이스가 sess를 거치므로 sess만 끊으면 전부 조용해진다.
+// look-ahead로 이미 예약된 음(최대 0.8초)까지 함께 사라진다 — 곡 전환 시 겹침 방지.
+function openSession(reverb) {
+  closeSession();
+  sess = ctx.createGain(); sess.gain.value = 1; sess.connect(master);
+  // 타악기는 sess로 직결, 음은 tonal을 거친다 → 둘의 균형을 한 곳에서 잡는다
+  tonal = ctx.createGain(); tonal.gain.value = TONAL_GAIN; tonal.connect(sess);
+  pump = ctx.createGain(); pump.connect(tonal);
+  // 베이스 버스: 클린(초저역·박스 대역 정리) + 드라이브(배음 생성)를 병렬로 섞는다.
+  // 저역만 있는 사인은 작은 스피커에서 "웅" 소리로만 들린다 — 배음이 있어야 음정이 전달된다.
+  subBus = ctx.createGain();
+  const sHp = ctx.createBiquadFilter(); sHp.type='highpass'; sHp.frequency.value = 34; sHp.Q.value = .7;
+  const sDip = ctx.createBiquadFilter(); sDip.type='peaking';
+  sDip.frequency.value = 200; sDip.Q.value = 1.1; sDip.gain.value = SUB_DIP;
+  const sOut = ctx.createGain(); sOut.gain.value = SUB_LEVEL;   // 베이스 최종 음량
+  sOut.connect(pump);
+  const sClean = ctx.createGain(); sClean.gain.value = 1;
+  subBus.connect(sHp); sHp.connect(sDip); sDip.connect(sClean); sClean.connect(sOut);
+  const sPre = ctx.createGain(); sPre.gain.value = 3.5;
+  const sDrv = ctx.createWaveShaper(); sDrv.curve = DRIVE_CURVE; sDrv.oversample = '4x';
+  const sBp = ctx.createBiquadFilter(); sBp.type='bandpass'; sBp.frequency.value = 700; sBp.Q.value = .55;
+  const sDrive = ctx.createGain(); sDrive.gain.value = SUB_DRIVE;
+  sHp.connect(sPre); sPre.connect(sDrv); sDrv.connect(sBp); sBp.connect(sDrive); sDrive.connect(sOut);
+  verb = ctx.createConvolver(); verb.buffer = IR;
+  verbGain = ctx.createGain(); verbGain.gain.value = reverb;
+  verb.connect(verbGain); verbGain.connect(tonal);
+}
+function closeSession() {
+  if (!sess) return;
+  const dead = [sess, pump, verb, verbGain, tonal, subBus], g = sess, t = ctx.currentTime;
+  g.gain.cancelScheduledValues(t);
+  g.gain.setValueAtTime(g.gain.value, t);
+  g.gain.linearRampToValueAtTime(0, t + .035);
+  setTimeout(() => dead.forEach((n) => { try { n.disconnect(); } catch (e) {} }), 250);
+  sess = pump = verb = verbGain = tonal = subBus = null;
+}
+
+// 하나의 범용 신스 — 패드·리드·플럭·베이스가 전부 이 함수다
+function synth(o) {
+  const { freqs, t, dur } = o;
+  const a = o.a ?? .01, d = o.d ?? .12, s = o.s ?? .4, r = o.r ?? .25;
+  const out = ctx.createGain(), lp = ctx.createBiquadFilter(), pan = ctx.createStereoPanner();
+  lp.type = 'lowpass'; lp.Q.value = o.q ?? .7;
+  lp.frequency.setValueAtTime(o.cut ?? 3000, t);
+  if (o.cutEnd) lp.frequency.exponentialRampToValueAtTime(o.cutEnd, t + dur * (o.cutTime ?? 1.2));
+  pan.pan.value = o.pan ?? 0;
+  const g = out.gain, peak = o.gain ?? .1;
+  g.setValueAtTime(0, t);
+  g.linearRampToValueAtTime(peak, t + a);
+  g.linearRampToValueAtTime(peak * s, t + a + d);
+  g.setValueAtTime(peak * s, t + dur);
+  g.linearRampToValueAtTime(0, t + dur + r);
+  out.connect(lp); lp.connect(pan);
+  pan.connect(o.bus === 'sub' && subBus ? subBus : pump);
+  if (o.send !== false) pan.connect(verb);
+  const det = o.detune ?? [0];
+  freqs.forEach((f) => det.forEach((c) => {
+    const osc = ctx.createOscillator();
+    if (o.periodic) osc.setPeriodicWave(o.periodic); else osc.type = o.wave ?? 'sawtooth';
+    osc.frequency.value = f; osc.detune.value = c;
+    osc.connect(out); osc.start(t); osc.stop(t + dur + r + .05);
+  }));
+}
+function kick(t, beat, amt = .32) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(158, t);
+  o.frequency.exponentialRampToValueAtTime(45, t + .1);
+  g.gain.setValueAtTime(.95, t); g.gain.exponentialRampToValueAtTime(.001, t + .3);
+  o.connect(g); g.connect(sess); o.start(t); o.stop(t + .32);
+  pump.gain.setValueAtTime(amt, t);
+  pump.gain.linearRampToValueAtTime(1, t + beat * .62);
+}
+function hat(t, gain = .1, open = false) {
+  const len = open ? .16 : .04;
+  const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*len), ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) ** (open ? 1.5 : 1);
+  const src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = buf; hp.type='highpass'; hp.frequency.value = open ? 6200 : 8300; g.gain.value = gain;
+  src.connect(hp); hp.connect(g); g.connect(sess); src.start(t);
+}
+function clap(t, gain = .18) {
+  const len = .18, buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*len), ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) ** 2.2;
+  const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = buf; bp.type='bandpass'; bp.frequency.value = 1700; bp.Q.value = 1.1; g.gain.value = gain;
+  src.connect(bp); bp.connect(g); g.connect(sess); src.start(t);
+}
+
+// ── 새 타악기 (v7~v10) ───────────────────────────────────
+function tom(t, freq, gain = .5, dec = .28) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(freq * 1.7, t);
+  o.frequency.exponentialRampToValueAtTime(freq, t + .06);
+  g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.001, t + dec);
+  o.connect(g); g.connect(sess); o.start(t); o.stop(t + dec + .02);
+}
+function snare(t, gain = .3) {
+  const len = .19, buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*len), ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) ** 1.6;
+  const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = buf; bp.type='bandpass'; bp.frequency.value = 2100; bp.Q.value = .8; g.gain.value = gain;
+  src.connect(bp); bp.connect(g); g.connect(sess); src.start(t);
+  const o = ctx.createOscillator(), g2 = ctx.createGain();       // 몸통
+  o.type='triangle'; o.frequency.setValueAtTime(210, t);
+  o.frequency.exponentialRampToValueAtTime(140, t + .08);
+  g2.gain.setValueAtTime(gain*.7, t); g2.gain.exponentialRampToValueAtTime(.001, t + .11);
+  o.connect(g2); g2.connect(sess); o.start(t); o.stop(t + .13);
+}
+function ride(t, gain = .07) {                                    // 재즈 라이드 — 얇고 길다
+  const len = .5, buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*len), ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) ** 3.4;
+  const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = buf; bp.type='bandpass'; bp.frequency.value = 5200; bp.Q.value = .5; g.gain.value = gain;
+  src.connect(bp); bp.connect(g); g.connect(sess); src.start(t);
+}
+// 로즈 — 배음 1·2·4만 쌓은 사인 (원문 §배음: 어떤 배음을 섞느냐가 악기다)
+function rhodes(freqs, t, dur, gain = .09, pan = 0) {
+  const out = ctx.createGain(), pn = ctx.createStereoPanner();
+  pn.pan.value = pan;
+  out.gain.setValueAtTime(0, t);
+  out.gain.linearRampToValueAtTime(gain, t + .012);
+  out.gain.exponentialRampToValueAtTime(gain * .28, t + .35);
+  out.gain.exponentialRampToValueAtTime(.0008, t + dur + .5);
+  out.connect(pn); pn.connect(pump); pn.connect(verb);
+  freqs.forEach((f) => [[1,1],[2,.32],[4,.10]].forEach(([h,a]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = f * h; o.detune.value = h === 1 ? 0 : 5;
+    g.gain.value = a; o.connect(g); g.connect(out);
+    o.start(t); o.stop(t + dur + .6);
+  }));
+}
+// 말렛 — 사인 + 3배음, 감쇠가 빠르다
+function mallet(f, t, dur, gain = .13, pan = 0) {
+  const out = ctx.createGain(), pn = ctx.createStereoPanner();
+  pn.pan.value = pan;
+  out.gain.setValueAtTime(0, t);
+  out.gain.linearRampToValueAtTime(gain, t + .004);
+  out.gain.exponentialRampToValueAtTime(.0008, t + dur);
+  out.connect(pn); pn.connect(pump); pn.connect(verb);
+  [[1,1],[3,.22],[6,.06]].forEach(([h,a]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type='sine'; o.frequency.value = f*h; g.gain.value = a;
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + .05);
+  });
+}
+// 순수 사인 드론 — v10 전용, 배음을 하나씩 켠다
+function drone(f, t, dur, gain, pan = 0) {
+  const out = ctx.createGain(), pn = ctx.createStereoPanner();
+  pn.pan.value = pan;
+  out.gain.setValueAtTime(0, t);
+  out.gain.linearRampToValueAtTime(gain, t + dur * .45);
+  out.gain.linearRampToValueAtTime(0, t + dur + .8);
+  const o = ctx.createOscillator();
+  o.type = 'sine'; o.frequency.value = f;
+  o.connect(out); out.connect(pn); pn.connect(pump); pn.connect(verb);
+  o.start(t); o.stop(t + dur + .9);
+}
+
+// ══════════════════════════════════════════════════════════
+//  v1 — 이끔음 (A단조 126)
+// ══════════════════════════════════════════════════════════
+const V1 = (() => {
+  const L = S.v1, sc = scaleOf(57, MODES.aeolian);
+  const prog = [1, 6, 3, 7], V7 = [64, 68, 71, 74];
+  const mel = [0,2,4,2, 3,2,1,0, 4,3,2,1, 0,2,1,0];
+  const leadBar = [71, 74, 71, 68];
+  return {
+    id:'v1', name:L.name, sub:L.sub, bpm:126, cycle:8, reverb:.3,
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'v7', label:L.ctl.v7, def:true}],
+    viz(){ return `<div class="strip">${Array.from({length:8},(_,i)=>{
+      const c = i===7 ? V7 : chordOf(sc, prog[i%4]);
+      const rn = i===7 ? 'V7' : ['i','VI','III','VII'][i%4];
+      return `<div class="cell2${i===7?' mark':''}" data-b="${i}"><b>${i===7?'E7':cname(c)}</b><small>${rn}</small></div>`;
+    }).join('')}</div>
+    <table><tr>${L.th.map(h=>`<th>${h}</th>`).join('')}</tr>
+    <tr><td>VII — G</td><td>G B D <code>[67,71,74]</code></td><td>${L.none}</td><td>${L.loose}</td></tr>
+    <tr><td style="color:var(--warn)">V7 — E7</td><td>E G♯ B D <code>[64,68,71,74]</code></td>
+    <td style="color:var(--warn)">G♯ (68)</td><td>${L.res}</td></tr></table>`; },
+    schedule(bar, t0, beat, opt) {
+      const isV7 = opt.v7 && bar % 8 === 7;
+      const notes = isV7 ? V7 : chordOf(sc, prog[bar % 4]);
+      synth({freqs:notes.map(mf), t:t0, dur:beat*4, detune:[-7,0,7], cut:1500, a:.22,d:.2,s:.85,r:.6, gain:.085});
+      synth({freqs:[mf(notes[0]-24)], t:t0, dur:beat*4, wave:'triangle', cut:900, a:.01,d:.09,s:.7,r:.1, gain:.3, send:false, bus:'sub'});
+      if (isV7) synth({freqs:[mf(notes[0]-24)], t:t0+beat*2.5, dur:beat*1.5, wave:'triangle', cut:900, gain:.28, send:false, bus:'sub'});
+      for (let b = 0; b < 4; b++) {
+        const m = isV7 ? leadBar[b] : degTo(sc, mel[(bar%4)*4+b]) + 12;
+        synth({freqs:[mf(m)], t:t0+b*beat, dur:beat*.9, detune:[-14,-5,0,5,14], cut:4200,
+               a:.008,d:.13,s:.32,r:.2, gain:isV7?.16:.13});
+        kick(t0+b*beat, beat);
+        hat(t0+b*beat+beat/2, isV7?.15:.10, b===3);
+        if (b % 2 === 1) clap(t0+b*beat, .14);
+      }
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v2 — 점8분 폴리리듬 (C♯단조 124)
+// ══════════════════════════════════════════════════════════
+const V2 = (() => {
+  const L = S.v2, sc = scaleOf(61, MODES.aeolian);
+  const prog = [1, 6, 3, 7];
+  const ARP = [0,1,2,1,2,0,1,2], OCT = [0,0,0,1,0,1,0,0];
+  const LEAD = [[4,2],[3,2],[2,1],[4,3],[2,0],[1,2],[4,3],[2,1],[0,2],[4,2],[3,1],[2,4]];
+  let next = 0, count = 0;
+  return {
+    id:'v2', name:L.name, sub:L.sub, bpm:124, cycle:12, reverb:.34,
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'dot', label:L.ctl.dot, def:true}],
+    reset(t){ next = t; count = 0; },
+    viz(){ return `<div id="v2grid"></div>
+      <div class="legend">${[['#212736',L.lg[0]],['#ff7ab6',L.lg[1]],['#fff',L.lg[2]]]
+        .map(([c,t])=>`<span><i class="sq" style="background:${c}"></i>${t}</span>`).join('')}</div>
+      <div class="strip" style="margin-top:16px">${Array.from({length:12},(_,i)=>
+        `<div class="cell2" data-b="${i}"><b>${cname(chordOf(sc, prog[i%4]))}</b><small>${['i','VI','III','VII'][i%4]}</small></div>`).join('')}</div>`; },
+    vizUpdate(opt){
+      const stride = opt.dot ? 3 : 2;
+      let h = '';
+      for (let bar = 0; bar < 3; bar++) {
+        h += `<div class="grid16"><div class="lb">${S.bar(bar+1)}</div>`;
+        for (let s = 0; s < 16; s++) {
+          const abs = bar*16+s, isA = abs % stride === 0, isQ = s % 4 === 0;
+          h += `<div class="c${isQ?' q':''}${isA?(isQ?' ab':' a'):''}"></div>`;
+        }
+        h += '</div>';
+      }
+      const el = document.getElementById('v2grid'); if (el) el.innerHTML = h;
+    },
+    schedule(bar, t0, beat, opt) {
+      const step = beat * (opt.dot ? .75 : .5);
+      const notes = chordOf(sc, prog[bar % 4]);
+      if (bar === 0) { next = t0; count = 0; }
+      synth({freqs:notes.map(mf), t:t0, dur:beat*4, detune:[-8,0,8], cut:1250, a:.35,d:.25,s:.9,r:.8, gain:.075});
+      [0,2].forEach((b)=> synth({freqs:[mf(notes[0]-24), mf(notes[0]-36)], t:t0+b*beat, dur:beat*2,
+                                 wave:'triangle', cut:850, a:.012,d:.1,s:.65,r:.12, gain:.3, send:false, bus:'sub'}));
+      LEAD[bar%12].forEach((d,k)=> synth({freqs:[mf(degTo(sc,d)+12)], t:t0+k*beat*2, dur:beat*1.7,
+                                 wave:'triangle', detune:[-6,6], cut:2600, a:.09,d:.2,s:.6,r:.5, gain:.10}));
+      for (let b = 0; b < 4; b++) {
+        kick(t0+b*beat, beat);
+        hat(t0+b*beat+beat/2, b===3?.14:.10, b===3);
+        if (b % 2 === 1) clap(t0+b*beat, .13);
+      }
+      const end = t0 + beat*4;
+      while (next < end) {
+        const i = count % ARP.length, m = notes[ARP[i]] + OCT[i]*12 + 12;
+        const pan = [-.55,-.15,.55,.15][count % 4];
+        synth({freqs:[mf(m)], t:next, dur:step*.7, detune:[-11,0,11], cut:5200, cutEnd:1600, cutTime:1.4,
+               a:.004,d:.1,s:.18,r:.22, gain:.115, pan});
+        count++; next += step;
+      }
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v3 — 모드 회전 (D 루트 고정 122)
+// ══════════════════════════════════════════════════════════
+const V3 = (() => {
+  const L = S.v3, ROOT = 62, prog = [1, 4, 1, 7];
+  const PLAN = [ {mode:'aeolian', bars:8}, {mode:'dorian', bars:16},
+                 {mode:'phrygian', bars:8}, {mode:'dorian', bars:16} ];
+  const TOTAL = PLAN.reduce((a,s)=>a+s.bars,0);
+  const at = (bar) => { let b = bar % TOTAL;
+    for (const s of PLAN) { if (b < s.bars) return s; b -= s.bars; } return PLAN[0]; };
+  const REF = scaleOf(ROOT, MODES.aeolian);
+  const mel = [0,4,3,2, 4,2,1,0, 3,2,4,3, 2,1,0,2];
+  return {
+    id:'v3', flat:true, name:L.name, sub:L.sub, bpm:122, cycle:TOTAL, reverb:.32,
+    quote:[L.quote, L.src], why:L.why, ctl:[],
+    viz(){ return `<div id="v3now" style="font-size:15px;margin:14px 0 6px"></div>
+      <div class="notes" id="v3notes"></div>
+      <div class="strip" id="v3chords" style="margin-top:14px"></div>
+      <table><tr>${L.th.map(h=>`<th>${h}</th>`).join('')}</tr>
+      ${['aeolian','dorian','phrygian'].map((m)=>{
+        const sc = scaleOf(ROOT, MODES[m]);
+        return `<tr><td>${L.modes[m]}</td><td><code>[${MODES[m]}]</code></td><td>${sc.map(nm).join(' ')}</td>
+        <td>${prog.map(d=>cname(chordOf(sc,d))).join(' – ')}</td></tr>`;
+      }).join('')}</table>`; },
+    tick(bar){
+      const s = at(bar), sc = scaleOf(ROOT, MODES[s.mode]);
+      const a = document.getElementById('v3now');
+      if (a) a.innerHTML = `${L.now} <b style="color:var(--acc)">${L.modes[s.mode]}</b> &nbsp;<code>rot(MAJOR, ${Object.keys(MODES).indexOf(s.mode)})</code>`;
+      const b = document.getElementById('v3notes');
+      if (b) b.innerHTML = sc.map((n,i)=>`<div class="n${n!==REF[i]?' diff':''}">${nm(n)}<small>${i+1}</small></div>`).join('');
+      const c = document.getElementById('v3chords');
+      if (c) c.innerHTML = prog.map((d,i)=>{const ch=chordOf(sc,d);
+        return `<div class="cell2${(bar%4)===i?' cur':''}"><b>${cname(ch)}</b><small>${['i','IV','i','VII'][i]}</small></div>`;}).join('');
+    },
+    schedule(bar, t0, beat) {
+      const sc = scaleOf(ROOT, MODES[at(bar).mode]);
+      const notes = chordOf(sc, prog[bar % 4]);
+      const soft = at(bar).mode === 'phrygian';
+      synth({freqs:notes.map(mf), t:t0, dur:beat*4, detune:[-9,0,9], cut:soft?900:1450,
+             a:soft?.5:.25, d:.25, s:.88, r:.9, gain:.09});
+      synth({freqs:[mf(notes[0]-24)], t:t0, dur:beat*4, wave:'triangle', cut:880, a:.012,d:.1,s:.7,r:.14, gain:.3, send:false, bus:'sub'});
+      for (let b = 0; b < 4; b++) {
+        const m = degTo(sc, mel[(bar%4)*4+b]) + 12;
+        synth({freqs:[mf(m)], t:t0+b*beat, dur:beat*.85, detune:[-12,0,12], cut:soft?2000:3800,
+               a:soft?.12:.01, d:.14, s:.35, r:.3, gain:soft?.09:.125});
+        if (!soft) { kick(t0+b*beat, beat); hat(t0+b*beat+beat/2, b===3?.13:.09, b===3);
+                     if (b%2===1) clap(t0+b*beat,.12); }
+      }
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v4 — 순정률 (F단조 118)
+// ══════════════════════════════════════════════════════════
+const V4 = (() => {
+  const L = S.v4, sc = scaleOf(65, MODES.aeolian);
+  const prog = [1, 6, 3, 7];
+  const JUST_MIN = [1, 6/5, 3/2], JUST_MAJ = [1, 5/4, 3/2];
+  const cents = (r) => 1200 * Math.log2(r);
+  const mel = [0,2,4,2, 1,0,4,3, 2,4,3,2, 0,1,2,0];
+  return {
+    id:'v4', flat:true, name:L.name, sub:L.sub, bpm:118, cycle:4, reverb:.44,
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'just', label:L.ctl.just, def:true}],
+    viz(){
+      const rows = prog.map((d)=>{ const c = chordOf(sc,d), isMin = quality(c)==='m';
+        const f0 = mf(c[0]), just = (isMin?JUST_MIN:JUST_MAJ).map(r=>f0*r), eq = c.map(mf);
+        return `<tr><td>${cname(c)}</td><td>${isMin?'10:12:15':'4:5:6'}</td>
+          <td>${eq.map(f=>f.toFixed(1)).join(' / ')}</td>
+          <td>${just.map(f=>f.toFixed(1)).join(' / ')}</td>
+          <td style="color:var(--hi)">${cents(eq[1]/just[1]).toFixed(1)}¢</td>
+          <td style="color:var(--hi)">${Math.abs(eq[1]-just[1]).toFixed(2)} Hz</td></tr>`; }).join('');
+      return `<table><tr>${L.th.map(h=>`<th>${h}</th>`).join('')}</tr>${rows}</table>
+      <p class="cap">${L.cap}</p>
+      <div class="strip">${prog.map((d,i)=>`<div class="cell2" data-b="${i}"><b>${cname(chordOf(sc,d))}</b><small>${['i','VI','III','VII'][i]}</small></div>`).join('')}</div>`; },
+    schedule(bar, t0, beat, opt) {
+      const c = chordOf(sc, prog[bar % 4]), isMin = quality(c) === 'm', f0 = mf(c[0]);
+      const freqs = opt.just ? (isMin?JUST_MIN:JUST_MAJ).map(r=>f0*r) : c.map(mf);
+      synth({freqs, t:t0, dur:beat*4, detune:[-4,4], cut:1100, a:.7,d:.4,s:.92,r:1.4, gain:.075});
+      synth({freqs:freqs.map(f=>f*2), t:t0, dur:beat*4, wave:'triangle', detune:[-3,3], cut:2200,
+             a:1.0,d:.4,s:.9,r:1.6, gain:.035});
+      synth({freqs:[mf(c[0]-24)], t:t0, dur:beat*4, wave:'sine', cut:600, a:.05,d:.35,s:.6,r:.4, gain:.34, send:false, bus:'sub'});
+      for (let b = 0; b < 4; b++) {
+        if (b % 2 === 0) synth({freqs:[mf(degTo(sc, mel[(bar%4)*4+b]) + 12)], t:t0+b*beat, dur:beat*1.6,
+          wave:'triangle', detune:[-5,5], cut:2400, a:.15,d:.25,s:.55,r:.7, gain:.085});
+        kick(t0+b*beat, beat, .45);
+        if (b === 2) clap(t0+b*beat, .12);
+        hat(t0+b*beat+beat/2, .06);
+      }
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v5 — 배음 모프 (G단조 128)
+// ══════════════════════════════════════════════════════════
+const V5 = (() => {
+  const L = S.v5, sc = scaleOf(55, MODES.aeolian);
+  const prog = [1, 6, 3, 7];
+  const mel = [0,2,4,4, 3,2,1,1, 4,3,2,2, 1,0,2,0];
+  const cache = new Map();
+  function wave(count, oddOnly) {
+    const k = count + ':' + oddOnly;
+    if (cache.has(k)) return cache.get(k);
+    const N = 34, real = new Float32Array(N), imag = new Float32Array(N);
+    for (let n = 1; n < N; n++) {
+      if (n > count) break;
+      if (oddOnly && n % 2 === 0) continue;
+      imag[n] = 1 / n;
+    }
+    const w = ctx.createPeriodicWave(real, imag, {disableNormalization:false});
+    cache.set(k, w); return w;
+  }
+  const plan = (bar) => { const b = bar % 16;
+    return b < 8 ? {count: 1 + b*2, odd:true,  phase:L.build}
+                 : {count: 32,      odd:false, phase:L.drop}; };
+  return {
+    id:'v5', flat:true, name:L.name, sub:L.sub, bpm:128, cycle:16, reverb:.28,
+    quote:[L.quote, L.src], why:L.why, ctl:[],
+    viz(){ return `<div id="v5phase" style="font-size:15px;margin:14px 0 8px"></div>
+      <div class="harm" id="v5harm">${Array.from({length:32},(_,i)=>`<div class="hb" data-h="${i+1}"></div>`).join('')}</div>
+      <div class="legend">${[['#ffd166',L.lg[0]],['#5ee0c0',L.lg[1]],['#2c3244',L.lg[2]]]
+        .map(([c,t])=>`<span><i class="sq" style="background:${c}"></i>${t}</span>`).join('')}</div>
+      <div class="strip" style="margin-top:16px">${Array.from({length:16},(_,i)=>
+        `<div class="cell2${i>=8?' mark':''}" data-b="${i}" style="font-size:11px;padding:9px 2px">
+         <b>${cname(chordOf(sc,prog[i%4]))}</b><small>${i<8?i*2+1:'32'}</small></div>`).join('')}</div>
+      <p class="cap">${L.cap}</p>`; },
+    tick(bar){
+      const p = plan(bar);
+      const el = document.getElementById('v5phase');
+      if (el) el.innerHTML = `<b style="color:${p.odd?'var(--warn)':'var(--go)'}">${p.phase}</b> — ${L.hcount(p.count)}`;
+      document.querySelectorAll('#v5harm .hb').forEach((b,i)=>{
+        const n = i+1, on = n <= p.count && !(p.odd && n%2===0);
+        b.style.height = on ? (100/n + 6) + '%' : '2%';
+        b.className = 'hb' + (on ? (p.odd ? ' odd' : ' on') : '');
+      });
+    },
+    schedule(bar, t0, beat) {
+      const p = plan(bar), w = wave(p.count, p.odd);
+      const notes = chordOf(sc, prog[bar % 4]), drop = !p.odd;
+      synth({freqs:notes.map(mf), t:t0, dur:beat*4, periodic:w, detune:[-9,0,9],
+             cut:drop?4200:2600, a:.2,d:.2,s:.85,r:.5, gain:drop?.075:.06});
+      synth({freqs:[mf(notes[0]-24)], t:t0, dur:beat*4, wave:'triangle', cut:900,
+             a:.012,d:.1,s:.7,r:.12, gain:.31, send:false, bus:'sub'});
+      for (let b = 0; b < 4; b++) {
+        const m = degTo(sc, mel[(bar%4)*4+b]) + 24;
+        synth({freqs:[mf(m)], t:t0+b*beat, dur:beat*.85, periodic:w, detune:[-14,0,14],
+               cut:drop?5200:3000, a:.008,d:.13,s:.3,r:.2, gain:drop?.135:.10});
+        if (drop || bar % 16 >= 4) kick(t0+b*beat, beat);
+        hat(t0+b*beat+beat/2, drop?.13:.07, b===3);
+        if (drop && b%2===1) clap(t0+b*beat, .15);
+      }
+      if (bar % 16 === 7) for (let s = 0; s < 16; s++) hat(t0+s*beat/4, .05 + s*.007);
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v6 — 19-EDO (110)
+// ══════════════════════════════════════════════════════════
+const V6 = (() => {
+  const L = S.v6;
+  const MAJ19 = [3,3,2,3,3,3,2], MIN19 = rot(MAJ19, 5);
+  const steps19 = build(0, MIN19).slice(0,7);
+  const steps12 = build(0, MODES.aeolian).slice(0,7);
+  const REF = 220;
+  const f19 = (s) => REF * 2 ** (s / 19);
+  const f12 = (s) => REF * 2 ** (s / 12);
+  const deg = (arr, i) => arr[((i%7)+7)%7] + Math.floor(i/7) * (arr === steps19 ? 19 : 12);
+  const chord19 = (arr, d) => [0,2,4].map(s=>deg(arr, d-1+s));
+  const prog = [1, 6, 3, 7];
+  const mel = [0,4,2,3, 4,3,2,1, 2,4,3,0, 1,2,0,0];
+  const cts = (s, n) => 1200 * s / n;
+  return {
+    id:'v6', name:L.name, sub:L.sub, bpm:110, cycle:4, reverb:.6,
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'edo19', label:L.ctl.edo19, def:true}],
+    viz(){
+      const rows = [[L.iv[0],11,7,701.955],[L.iv[1],6,4,386.314],[L.iv[2],5,3,315.641],[L.iv[3],14,9,884.359]]
+        .map(([n,s19,s12,just])=>{
+          const a = cts(s19,19), b = cts(s12,12), ea = a-just, eb = b-just;
+          const win = Math.abs(ea) < Math.abs(eb);
+          return `<tr><td>${n}</td><td>${just.toFixed(2)}¢</td>
+            <td>${s12} ${S.steps} ${b.toFixed(1)}¢ <span style="color:${win?'var(--dim)':'var(--go)'}">(${eb>0?'+':''}${eb.toFixed(2)})</span></td>
+            <td>${s19} ${S.steps} ${a.toFixed(1)}¢ <span style="color:${win?'var(--go)':'var(--dim)'}">(${ea>0?'+':''}${ea.toFixed(2)})</span></td></tr>`;
+        }).join('');
+      return `<table><tr>${L.th.map(h=>`<th>${h}</th>`).join('')}</tr>${rows}</table>
+      <p class="cap">${L.cap}</p>
+      <div class="strip">${prog.map((d,i)=>`<div class="cell2" data-b="${i}"><b>${['i','VI','III','VII'][i]}</b><small>${chord19(steps19,d).join('/')} ${S.steps}</small></div>`).join('')}</div>`; },
+    schedule(bar, t0, beat, opt) {
+      const arr = opt.edo19 ? steps19 : steps12, F = opt.edo19 ? f19 : f12;
+      const c = chord19(arr, prog[bar % 4]), freqs = c.map(F);
+      synth({freqs, t:t0, dur:beat*4, detune:[-5,0,5], cut:1050, a:1.1,d:.5,s:.9,r:2.0, gain:.075});
+      synth({freqs:freqs.map(f=>f*2), t:t0, dur:beat*4, wave:'triangle', detune:[-4,4], cut:2400,
+             a:1.4,d:.5,s:.85,r:2.2, gain:.03});
+      synth({freqs:[F(c[0]) / 4], t:t0, dur:beat*4, wave:'sine', cut:500, a:.1,d:.3,s:.85,r:.8, gain:.36, send:false, bus:'sub'});
+      for (let b = 0; b < 4; b++) {
+        if (b % 2 === 0) {
+          const m = deg(arr, mel[(bar%4)*4+b]);
+          synth({freqs:[F(m) * 2], t:t0+b*beat, dur:beat*1.8, wave:'triangle', detune:[-6,6],
+                 cut:2100, a:.25,d:.3,s:.5,r:1.1, gain:.075, pan:(b?.3:-.3)});
+        }
+        if (b === 0 || b === 2) kick(t0+b*beat, beat, .55);
+        hat(t0+b*beat+beat/2, .045);
+      }
+      if (bar % 4 === 3) clap(t0+beat*2, .09);
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  트랜스포트 + UI
+// ══════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════
+//  v7 — 7/8 박자 (E단조 140) · 4-on-the-floor를 깬다
+// ══════════════════════════════════════════════════════════
+const V7 = (() => {
+  const L = S.v7, sc = scaleOf(64, MODES.aeolian);        // E F♯ G A B C D
+  const prog = [1, 7, 6, 5];                              // Em – D – C – Bm
+  const GA = { on: [2,2,3], off: [3,2,2] };
+  const heads = (g) => g.reduce((a,n)=>[...a, a.at(-1)+n], [0]).slice(0,3);
+  const mel = [
+    [0,2, 4,2, 6,4,2],
+    [4,3, 2,4, 1,2,4],
+    [2,1, 0,2, 4,2,0],
+    [1,2, 4,3, 2,1,0],
+  ];
+  return {
+    id:'v7', name:L.name, sub:L.sub, bpm:140, cycle:4, reverb:.24,
+    barBeats: 3.5,                                        // 8분음표 7개 = 4분박 3.5
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'grp', label:L.ctl.grp, def:true}],
+    viz(){
+      return `<div id="v7grid"></div><p class="cap">${L.lab}</p>
+      <div class="strip">${prog.map((d,i)=>`<div class="cell2" data-b="${i}"><b>${cname(chordOf(sc,d))}</b><small>${['i','VII','VI','v'][i]}</small></div>`).join('')}</div>`;
+    },
+    vizUpdate(opt){
+      const g = opt.grp ? GA.on : GA.off, h = heads(g);
+      const el = document.getElementById('v7grid'); if (!el) return;
+      const drum = ['kick','snare','kick'];
+      let html = `<div class="grid16" style="grid-template-columns:40px repeat(7,1fr)"><div class="lb">${g.join('+')}</div>`;
+      for (let i = 0; i < 7; i++) {
+        const k = h.indexOf(i);
+        html += `<div class="c${k>=0?' ab':''}" style="aspect-ratio:auto;height:34px;display:flex;align-items:center;justify-content:center;font-size:10px;color:${k>=0?'#0b0d12':'#6a7085'}">${k>=0?drum[k]:i}</div>`;
+      }
+      el.innerHTML = html + '</div>';
+    },
+    schedule(bar, t0, beat, opt) {
+      const e = beat / 2, g = opt.grp ? GA.on : GA.off, h = heads(g);
+      const notes = chordOf(sc, prog[bar % 4]);
+      h.forEach((pos, gi) => synth({ freqs:[mf(notes[0]-24)], t:t0+pos*e, dur:e*g[gi]*.85,
+        wave:'triangle', cut:850, a:.008, d:.07, s:.6, r:.08, gain:.30, send:false, bus:'sub' }));
+      for (let i = 0; i < 7; i++) {
+        const acc = h.includes(i);
+        mallet(mf(degTo(sc, mel[bar%4][i]) + 12), t0+i*e, acc ? e*2.1 : e*1.2,
+               acc ? .155 : .085, ((i % 3) - 1) * .45);
+      }
+      kick(t0 + h[0]*e, beat, .42);
+      snare(t0 + h[1]*e, .24);
+      kick(t0 + h[2]*e, beat, .42);
+      tom(t0 + 6*e, 128, .34, .2);
+      for (let i = 0; i < 7; i++) if (!h.includes(i)) hat(t0+i*e, .065);
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v8 — 블루스 하프타임 (C단조 86) · 8마디 루프
+//  네 가지 개선안을 따로 켜고 끄며 비교한다
+// ══════════════════════════════════════════════════════════
+const V8 = (() => {
+  const L = S.v8;
+  const BLUES = [3,2,1,1,3,2], PENTA = [3,2,2,3,2];
+  const ROOT = 48;
+  const SB = build(ROOT, BLUES).slice(0,6);          // C E♭ F G♭ G B♭
+  const SP = build(ROOT, PENTA).slice(0,5);          // C E♭ F  G  B♭
+  const TO_PENTA = [0,1,2,3,3,4];
+  const ch = scaleOf(48, MODES.aeolian);
+  const prog = [1,1,4,4,6,6,7,7];                    // Cm Cm Fm Fm A♭ A♭ B♭ B♭
+
+  // ── 멜로디: [블루스 인덱스, 박 위치]
+  const MEL = [
+    [[0,0],[2,1.5],[3,2],[4,2.5]],
+    [[2,0],[0,2]],
+    [[4,0],[3,1],[2,1.5],[0,3]],
+    [[2,0],[4,2.5]],
+  ];
+  // 2마디 변주: 홀수 마디에만 얹는 대체 라인
+  const MEL_VAR = [
+    [[0,0],[2,1.25],[3,1.75],[4,2.5],[3,3.25]],
+    [[2,0],[3,1.75],[0,2.5]],
+    [[4,0],[3,1],[2,1.75],[3,2.5],[0,3.25]],
+    [[2,0],[3,2],[4,2.75]],
+  ];
+
+  // ── 베이스: [위치, 길이]
+  const BASS_PLAIN = [[0, 3.7]];
+  const BASS_SYNC  = [[0, 1.4], [1.5, .45], [2.25, .6], [3.75, .35]];   // 전부 0.75 격자
+
+  // ── 스탭 위치
+  const STAB_PLAIN = [1.5, 3.5];
+  const STAB_TIGHT = [1.5, 2.75, 3.5];
+
+  // ── 보이스 리딩 — 원문: "가능한 한 가장 짧은 거리로"
+  const PERM3 = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  function voiceLead(prev, notes) {
+    if (!prev) return notes.slice();
+    const pcs = notes.map(n => ((n % 12) + 12) % 12);
+    let best = notes.slice(), cost = Infinity;
+    for (const pm of PERM3) {
+      const v = prev.map((pv, i) => pv + ((((pcs[pm[i]] - pv) % 12) + 18) % 12) - 6);
+      const c = v.reduce((a, x, i) => a + Math.abs(x - prev[i]), 0);
+      if (c < cost) { cost = c; best = v; }
+    }
+    best = best.slice().sort((a,b)=>a-b);
+    const mid = best.reduce((a,b)=>a+b,0) / 3;
+    if (mid < 47) best = best.map(x=>x+12);
+    if (mid > 62) best = best.map(x=>x-12);
+    return best;
+  }
+  const moveOf = (a,b) => a ? b.reduce((s,x,i)=>s+Math.abs(x-a[i]),0) : 0;
+  let vlState = null, vlBar = -1;
+
+  // ── 완곡 구성 (48마디). 빼지 않는다 — 원본 위에 사건만 얹는다.
+  const FORM = [
+    { bars:8,  snare:false, oct:0, square:false, counter:false, fill:false, vary:false },
+    { bars:16, snare:true,  oct:0, square:false, counter:false, fill:true,  vary:false },
+    { bars:8,  snare:false, oct:1, square:false, counter:false, fill:false, vary:false },
+    { bars:16, snare:true,  oct:0, square:true,  counter:true,  fill:true,  vary:true  },
+  ];
+  const SONG = FORM.reduce((a,f)=>a+f.bars, 0);            // 48
+  const secAt = (b) => { let x = b % SONG, i = 0;
+    for (const f of FORM) { if (x < f.bars) return { f, i, at:x }; x -= f.bars; i++; }
+    return { f:FORM[0], i:0, at:0 }; };
+
+  // ── 프리셋
+  const PRESETS = [
+    { f5:1, stab:0, syn:0, vr:0, vl:0, song:0 },
+    { f5:1, stab:1, syn:0, vr:0, vl:0, song:0 },
+    { f5:1, stab:0, syn:1, vr:0, vl:0, song:0 },
+    { f5:1, stab:0, syn:0, vr:1, vl:0, song:0 },
+    { f5:1, stab:0, syn:0, vr:0, vl:1, song:0 },
+    { f5:1, stab:1, syn:1, vr:1, vl:0, song:0 },
+    { f5:1, stab:0, syn:0, vr:0, vl:0, song:1 },
+  ];
+  window.v8preset = (k) => {
+    const P = PRESETS[k];
+    Object.entries(P).forEach(([id, on]) => {
+      const el = document.querySelector(`input[data-t="v8"][data-c="${id}"]`);
+      if (el && el.checked !== !!on) { el.checked = !!on; el.dispatchEvent(new Event('change')); }
+    });
+    document.querySelectorAll('#v8pre .cell2').forEach((e,i)=>e.classList.toggle('mark', i===k));
+  };
+
+  return {
+    id:'v8', flat:true, name:L.name, sub:L.sub, bpm:86, reverb:.28,
+    get cycle(){ return (opts.v8 && opts.v8.song) ? SONG : 8; },
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'f5', label:L.ctl.f5, def:true}, {id:'stab', label:L.ctl.stab, def:false},
+         {id:'syn', label:L.ctl.syn, def:false}, {id:'vr', label:L.ctl.vr, def:false},
+         {id:'vl', label:L.ctl.vl, def:false}, {id:'song', label:L.ctl.song, def:false}],
+    reset(){ vlState = null; vlBar = -1; },
+    tick(bar){
+      if (!(opts.v8 && opts.v8.song)) return;
+      const { i } = secAt(bar);
+      document.querySelectorAll('#v8form .cell2[data-s]').forEach((e,k)=>e.classList.toggle('cur', k===i));
+    },
+    // 체크박스를 직접 만졌을 때 프리셋 하이라이트를 맞춰 준다 (일치하는 게 없으면 전부 해제)
+    vizUpdate(opt){
+      const k = PRESETS.findIndex(P => Object.entries(P).every(([id,on]) => !!opt[id] === !!on));
+      document.querySelectorAll('#v8pre .cell2').forEach((e,i)=>e.classList.toggle('mark', i === k));
+      const el = document.getElementById('v8form');
+      if (el) el.innerHTML = opt.song ? `<div class="strip" style="gap:4px;margin-top:14px">${
+        FORM.map((x,i)=>`<div class="cell2" data-s="${i}" style="flex:${x.bars};font-size:11px;padding:9px 2px">
+          <b>${L.form[i]}</b><small>${S.bar(x.bars)}</small></div>`).join('')}</div>
+        <p class="cap">${L.songCap}</p>` : '';
+    },
+    viz(){
+      let rp = null, rpT = 0, vl = null, vlT = 0;
+      [1,4,6,7,1].forEach((d,i) => {
+        const raw = chordOf(ch, d);
+        if (i) rpT += moveOf(rp, raw); rp = raw;
+        const nv = voiceLead(vl, raw); if (i) vlT += moveOf(vl, nv); vl = nv;
+      });
+      const pre = `<h4 style="font-size:13px;color:var(--acc);margin:6px 0 8px;letter-spacing:.04em">${L.presetTh}</h4>
+        <div class="strip" id="v8pre" style="gap:5px">${L.presets.map((n,i)=>
+          `<div class="cell2${i===0?' mark':''}" style="cursor:pointer;font-size:12px" onclick="v8preset(${i})"><b>${n}</b></div>`).join('')}</div>`;
+      const rows = L.diffs.map(([a,b,c])=>`<tr><td><b>${a}</b></td><td style="color:var(--dim)">${b}</td><td style="color:var(--go)">${c}</td></tr>`).join('');
+      const bars = `<div class="strip" style="margin-top:16px">${prog.map((d,i)=>
+        `<div class="cell2" data-b="${i}" style="font-size:12px"><b>${cname(chordOf(ch,d))}</b><small>${i%2===0?'●':'·'}</small></div>`).join('')}</div>`;
+      return pre + `<div id="v8form"></div>` + bars +
+        `<table style="margin-top:20px"><tr>${L.diffTh.map(x=>`<th>${x}</th>`).join('')}</tr>${rows}</table>
+         <p class="cap">${L.vlCap(rpT, vlT)}</p>
+         <p class="cap">♭5 = <b style="color:var(--hi)">${nm(SB[3])}</b> — 블루스 <code>[${BLUES}]</code>에만 있고 단5음 <code>[${PENTA}]</code>에는 없다.</p>`;
+    },
+    schedule(bar, t0, beat, opt) {
+      // 완곡이면 구간을, 아니면 "메인" 상태를 그대로 쓴다
+      // 완곡이 아니면 순수 루프 — 원본에 없던 필/오픈햇이 붙지 않도록 별도 상태를 쓴다
+      const PLAIN = { bars:8, snare:true, oct:0, square:false, counter:false, fill:false, vary:false };
+      const sec = opt.song ? secAt(bar) : { f:PLAIN, i:1, at:bar % 8 };
+      const F = sec.f;
+      const usePenta = !opt.f5;
+      const sc = usePenta ? SP : SB;
+      const pick = (i) => sc[usePenta ? TO_PENTA[i % 6] : i % 6];
+      const raw = chordOf(ch, prog[bar % 8]);
+      if (opt.vl) { if (bar !== vlBar) { vlState = voiceLead(vlState, raw); vlBar = bar; } }
+      const v = opt.vl ? vlState : raw;
+      const two = bar % 2 === 0;
+      const vary = (opt.vr || F.vary) && !two;
+      const square = opt.stab || F.square;
+
+      // ── 베이스 (근음은 항상 raw[0] — 보이스 리딩과 무관하게 저역을 지킨다)
+      // 근음 C1(32.7Hz)은 스피커에서 음정이 아니라 웅 소리로만 들린다 → C2(65.4Hz)
+      const bp = opt.syn ? BASS_SYNC : BASS_PLAIN;
+      bp.forEach(([at, dur]) => synth({freqs:[mf(raw[0] - 12)], t:t0 + at*beat, dur:beat*dur,
+        wave:'triangle', cut:520, a:.012, d:.32, s:.42, r:.28, gain:.38, send:false, bus:'sub'}));
+      if (!opt.syn && !two) synth({freqs:[mf(raw[0] - 12)], t:t0 + beat*3.5, dur:beat*.4,
+        wave:'triangle', cut:520, a:.008, d:.08, s:.45, r:.1, gain:.30, send:false, bus:'sub'});
+
+      // ── 스탭
+      const sp = square ? STAB_TIGHT : STAB_PLAIN;
+      sp.forEach((b, k) => {
+        if (vary && k === 0) return;                     // 변주: 홀수 마디는 첫 스탭을 뺀다
+        const pan = (k % 2 ? .38 : -.38);
+        if (square) {
+          synth({freqs:v.map(x=>mf(x+12)), t:t0+b*beat, dur:beat*.2, wave:'square',
+                 detune:[-6,6], cut:2600, cutEnd:900, q:6, a:.004, d:.07, s:.1, r:.12, gain:.062, pan});
+          hat(t0 + b*beat, .045);                        // 트랜지언트
+        } else {
+          synth({freqs:v.map(x=>mf(x+12)), t:t0+b*beat, dur:beat*.28, detune:[-10,10],
+                 cut:1900, cutEnd:700, a:.006, d:.09, s:.15, r:.16, gain:.10, pan});
+        }
+      });
+      if (two) rhodes(v.map(x=>mf(x+12)), t0, beat*1.6, .055, 0);
+
+      // ── 멜로디
+      const line = (vary ? MEL_VAR : MEL)[bar % 4];
+      line.forEach(([d, at]) => {
+        const isF5 = !usePenta && (d % 6) === 3;
+        mallet(mf(pick(d) + 24 + F.oct*12), t0 + at*beat, beat*(isF5 ? .95 : .72),
+               isF5 ? .135 : .115, ((d % 3) - 1) * .35);
+      });
+      // 라스트 구간: 옥타브 위 카운터라인
+      if (F.counter && two)
+        [[2, .75], [3, 2.75]].forEach(([d, at]) =>
+          mallet(mf(pick(d) + 36), t0 + at*beat, beat*.9, .05, .5));
+
+      // ── 드럼: 하프타임 — 킥 1박, 스네어 3박
+      kick(t0, beat*2, .42);
+      kick(t0 + beat*3.5, beat*2, .5);
+      if (F.snare) snare(t0 + beat*2, .30);
+      if (F.square) hat(t0 + beat*2, .06, true);         // 라스트: 오픈햇
+      const step = vary ? .25 : .5;
+      for (let i = 0; i*step < 4; i++) hat(t0 + i*step*beat, (i % 2) ? .032 : .052);
+      if ((opt.vr || F.fill) && bar % 8 === 7)
+        [0,1,2,3].forEach(k => tom(t0 + beat*(2 + k*.5), 195 - k*34, .32, .18));
+      // 구간이 바뀌기 직전 마디에 진입 필
+      if (opt.song && sec.at === F.bars - 1 && !F.fill)
+        [0,1,2].forEach(k => tom(t0 + beat*(2.5 + k*.5), 205 - k*36, .30, .2));
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v9 — ii–V–I 스윙 (C장조 96) · 7화음, 마디당 코드 2개
+// ══════════════════════════════════════════════════════════
+const V9 = (() => {
+  const L = S.v9;
+  const SH = { maj7:[0,4,7,11], m7:[0,3,7,10], dom7:[0,4,7,10] };
+  const PROG = [
+    [[62,'m7','Dm7','ii'],   [67,'dom7','G7','V']],
+    [[60,'maj7','Cmaj7','I'],[60,'maj7','Cmaj7','I']],
+    [[64,'m7','Em7','iii'],  [69,'dom7','A7','V/ii']],
+    [[62,'m7','Dm7','ii'],   [67,'dom7','G7','V']],
+  ];
+  const voice = (r, q) => SH[q].map(x => r + x);
+  const mel = [[4,0],[2,1],[7,2],[4,3]];
+  return {
+    id:'v9', name:L.name, sub:L.sub, bpm:96, cycle:4, reverb:.36,
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'swing', label:L.ctl.swing, def:true}],
+    viz(){
+      const rows = PROG.map((pair,i) => pair.map(([r,q,n,rn],k)=>
+        `<tr><td>${i+1}${k?'.5':''}</td><td>${n}</td><td><code>[${SH[q]}]</code> ${q}</td>
+         <td style="color:${rn==='V/ii'?'var(--warn)':'var(--dim)'}">${rn==='V/ii'?'C♯ (A7)':L.none}</td></tr>`).join('')).join('');
+      return `<table><tr>${L.th.map(x=>`<th>${x}</th>`).join('')}</tr>${rows}</table>
+        <div class="strip">${PROG.map((pr,i)=>`<div class="cell2" data-b="${i}"><b>${pr[0][2]} ${pr[1][2]!==pr[0][2]?pr[1][2]:''}</b><small>${pr[0][3]} ${pr[1][3]!==pr[0][3]?pr[1][3]:''}</small></div>`).join('')}</div>`;
+    },
+    schedule(bar, t0, beat, opt) {
+      const pair = PROG[bar % 4];
+      const sw = opt.swing ? 2/3 : 1/2;                    // 8분을 2:1로 — 균등이 아니다
+      pair.forEach(([r,q], k) => {
+        const v = voice(r, q).map(mf);
+        // 컴핑: 코드를 뒷박에 툭 던진다 (지속 패드 아님)
+        rhodes(v, t0 + (k*2 + 1 + sw - 1)*beat, beat*.9, .085, k ? .22 : -.22);
+        if (k === 0) rhodes(v, t0, beat*.6, .05, 0);
+      });
+      // 워킹 베이스 — 4분음표로 걸어다닌다
+      const walk = [pair[0][0], pair[0][0]+7, pair[1][0], pair[1][0]+7];
+      walk.forEach((m,b) => synth({freqs:[mf(m-24)], t:t0+b*beat, dur:beat*.82,
+        wave:'triangle', cut:780, a:.01, d:.12, s:.5, r:.1, gain:.30, send:false, bus:'sub'}));
+      // 멜로디 — 스윙된 뒷박에 얹는다
+      mel.forEach(([d,b]) => { if ((bar + b) % 2 === 0)
+        mallet(mf(degTo(scaleOf(60, MODES.ionian), d) + 12), t0 + (b + sw)*beat, beat*.7, .10, 0); });
+      // 드럼: 킥 대신 라이드
+      for (let b = 0; b < 4; b++) {
+        ride(t0 + b*beat, .075);
+        if (b === 1 || b === 3) { ride(t0 + (b+sw)*beat, .055); hat(t0 + b*beat, .05); }
+      }
+      kick(t0, beat, .62);
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  v10 — 배음렬 드론 (A1 기음 92) · 코드 진행이 없다
+// ══════════════════════════════════════════════════════════
+const V10 = (() => {
+  const L = S.v10, F0 = 55;                                // A1
+  const PLAN = [
+    [2,3,4],[2,3,4],[2,3,4,6],[2,3,4,6],
+    [2,3,4,5,6],[2,3,4,5,6],[2,3,4,5,6,9],[2,3,4,5,6,9],
+    [3,4,5,6,7,9],[3,4,5,6,7,9],[4,5,6,7,9,11],[4,5,6,7,9,11],
+    [4,5,6,7,8,9,11,13],[4,5,6,7,8,9,11,13],[2,3,4,6,8],[2,3,4,6,8],
+  ];
+  const ALL = [2,3,4,5,6,7,8,9,11,12,13,16];
+  const ct = (h) => { const c = 1200*Math.log2(h/4); return ((c % 1200) + 1200) % 1200; };
+  const snap = (f) => 440 * 2 ** (Math.round(12*Math.log2(f/440))/12);
+  return {
+    id:'v10', name:L.name, sub:L.sub, bpm:92, cycle:16, reverb:.68,
+    quote:[L.quote, L.src], why:L.why,
+    ctl:[{id:'snap', label:L.ctl.snap, def:false}],
+    viz(){
+      const rows = ALL.map(h => { const c = ct(h), near = Math.round(c/100)*100, e = c - near;
+        return `<tr><td>h${h}</td><td>${h}/4</td><td>${c.toFixed(2)}¢</td>
+          <td style="color:${Math.abs(e)>25?'var(--hi)':'var(--dim)'}">${e>0?'+':''}${e.toFixed(2)}¢</td></tr>`; }).join('');
+      return `<div id="v10lit" style="margin:14px 0"></div>
+        <table><tr>${L.th.map(x=>`<th>${x}</th>`).join('')}</tr>${rows}</table>
+        <div class="strip">${Array.from({length:16},(_,i)=>`<div class="cell2" data-b="${i}" style="font-size:11px;padding:9px 2px"><b>${PLAN[i].length}</b><small>${PLAN[i].join('·')}</small></div>`).join('')}</div>`;
+    },
+    tick(bar){
+      const on = PLAN[bar % 16];
+      const el = document.getElementById('v10lit'); if (!el) return;
+      el.innerHTML = `<div style="display:flex;gap:5px;flex-wrap:wrap">${ALL.map(h=>{
+        const lit = on.includes(h), c = ct(h), far = Math.abs(c - Math.round(c/100)*100) > 25;
+        return `<div class="n" style="flex:0 0 62px;${lit?`background:${far?'#2a1a24':'#1b2a26'};border-color:${far?'var(--hi)':'var(--go)'};color:${far?'var(--hi)':'var(--go)'}`:'opacity:.32'}">h${h}<small>${c.toFixed(0)}¢</small></div>`;
+      }).join('')}</div>`;
+    },
+    schedule(bar, t0, beat, opt) {
+      const on = PLAN[bar % 16], dur = beat*4;
+      on.forEach((h, i) => {
+        let f = F0 * h;
+        if (opt.snap) f = snap(f);
+        drone(f, t0, dur, .085 / Math.sqrt(h), ((i / Math.max(1, on.length-1)) - .5) * 1.5);
+      });
+      let fb = F0 * 2; if (opt.snap) fb = snap(fb);
+      synth({freqs:[fb/2], t:t0, dur, wave:'sine', cut:300, a:.6, d:.4, s:.9, r:1.2, gain:.34, send:false, bus:'sub'});
+      if (bar % 2 === 0) tom(t0, 62, .30, .55);            // 2마디마다 한 번 울리는 맥박
+      if (bar % 8 === 7) { hat(t0 + beat*3, .04, true); }
+    }
+  };
+})();
+
+// 탭 순서 = 이 배열 순서. IDEA 번호는 위치에서 자동 계산된다.
+const TRACKS = [V7, V8, V9, V10, V1, V2, V3, V4, V5, V6];
+let cur = TRACKS[0], timer = null, bar = 0, startT = 0, beat = .5;
+
+document.getElementById('tabs').innerHTML = TRACKS.map((t,i)=>
+  `<div class="tab${i===0?' on':''}" data-i="${i}"><b>IDEA ${i+1}</b>${t.name}</div>`).join('');
+
+document.getElementById('panels').innerHTML = TRACKS.map((t,i)=>{ FLAT = !!t.flat; return `
+  <div class="panel${i===0?' on':''}" data-i="${i}">
+    <h2>${t.name}</h2>
+    <p class="meta">${t.sub}</p>
+    <div class="quote">“${t.quote[0]}”<br><span>— Music Theory for Programmers, ${t.quote[1]}</span></div>
+    <div class="why"><h4>${S.whatItDoes}</h4>${t.why}</div>
+    ${t.ctl.length ? `<div class="ctl">${t.ctl.map(c=>
+      `<label class="sw"><input type="checkbox" data-t="${t.id}" data-c="${c.id}" ${c.def?'checked':''}> ${c.label}</label>`).join('')}</div>` : ''}
+    ${t.viz()}
+  </div>`; }).join('');
+
+document.getElementById('foot').innerHTML = `
+  <p>${S.footIntro}</p>
+  <p><a href="https://runjs.app/blog/music-theory-for-programmers" target="_blank" rel="noopener">Music Theory for Programmers</a><span class="src">runjs.app</span></p>
+  <p class="langsw">
+    <a href="?lang=ko" class="${LANG==='ko'?'on':''}">한국어</a><i>·</i><a href="?lang=en" class="${LANG==='en'?'on':''}">English</a>
+  </p>`;
+
+const opts = {};
+TRACKS.forEach(t => { opts[t.id] = {}; t.ctl.forEach(c => opts[t.id][c.id] = c.def); });
+document.querySelectorAll('input[data-c]').forEach(el => {
+  el.onchange = () => {
+    opts[el.dataset.t][el.dataset.c] = el.checked;
+    const t = TRACKS.find(x => x.id === el.dataset.t);
+    if (t.vizUpdate) t.vizUpdate(opts[t.id]);
+  };
+});
+TRACKS.forEach(t => t.vizUpdate && t.vizUpdate(opts[t.id]));
+
+function select(i) {
+  cur = TRACKS[i];
+  document.querySelectorAll('.tab').forEach((e,k)=>e.classList.toggle('on', k===i));
+  document.querySelectorAll('.panel').forEach((e,k)=>e.classList.toggle('on', k===i));
+  document.getElementById('bpm').value = cur.bpm;
+  document.getElementById('bpmv').textContent = cur.bpm;
+  if (timer) { stop(); play(); } else { lastPaint = -1; paint(true); }
+  syncBtn();
+}
+document.querySelectorAll('.tab').forEach(el => el.onclick = () => select(+el.dataset.i));
+
+let lastPaint = -1, lastTrack = null;
+function paint(force) {
+  const line = document.getElementById('nowline');
+  const bb = cur.barBeats ?? 4;
+  const b = timer ? Math.max(0, Math.floor((ctx.currentTime - startT) / (beat*bb))) : 0;
+  if (!force && b === lastPaint && cur === lastTrack) return;
+  lastPaint = b; lastTrack = cur;
+  line.innerHTML = timer
+    ? `<b>${cur.name}</b> · ${cur.bpm} BPM · ${S.barPos(b % cur.cycle + 1, cur.cycle)}`
+    : `<b>${cur.name}</b> · ${S.cycle(cur.cycle)}`;
+  const p = document.querySelector('.panel.on');
+  if (p) {
+    const cells = p.querySelectorAll('.cell2[data-b]');
+    const n = cells.length || cur.cycle;
+    cells.forEach((e,k)=>e.classList.toggle('cur', !!timer && k === b % n));
+  }
+  if (cur.tick) { FLAT = !!cur.flat; cur.tick(timer ? b : 0); }
+}
+
+function play() {
+  if (timer) return;
+  if (!ctx) initAudio();
+  ctx.resume();
+  openSession(cur.reverb);
+  beat = 60 / +document.getElementById('bpm').value;
+  bar = 0;
+  let next = ctx.currentTime + .15;
+  startT = next;
+  if (cur.reset) cur.reset(next);
+  const tick = () => {
+    const bb = cur.barBeats ?? 4;
+    while (next < ctx.currentTime + .8) { cur.schedule(bar++, next, beat, opts[cur.id]); next += beat*bb; }
+  };
+  tick(); timer = setInterval(tick, 90);
+  syncBtn();
+  lastPaint = -1; paint(true);
+  (function loop(){ if (!timer) return; paint(); requestAnimationFrame(loop); })();
+}
+function stop() {
+  clearInterval(timer); timer = null;
+  closeSession();
+  syncBtn(); lastPaint = -1; paint(true);
+}
+function syncBtn() {
+  const b = document.getElementById('toggle');
+  b.textContent = timer ? '■ Stop' : '▶︎ Play';
+  b.classList.toggle('playing', !!timer);
+}
+document.getElementById('toggle').onclick = () => (timer ? stop() : play());
+document.getElementById('bpm').oninput = (e) => {
+  document.getElementById('bpmv').textContent = e.target.value;
+  if (timer) { stop(); play(); }
+};
+select(0);
+</script>

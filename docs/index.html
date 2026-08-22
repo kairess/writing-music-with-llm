@@ -63,6 +63,7 @@
   footer a{color:var(--acc);text-decoration:none;border-bottom:1px solid rgba(122,162,255,.35)}
   footer a:hover{border-bottom-color:var(--acc)}
   footer .src{color:#5b6070;font-size:12px;margin-left:8px}
+  footer .lbl{color:#5b6070;font-size:12px;display:inline-block;min-width:62px}
   footer .tech{color:#5b6070;font-size:12px;margin:0}
   .langsw{margin-top:14px;font-size:12px}
   .langsw a{cursor:pointer;border:0;color:#5b6070}
@@ -107,6 +108,7 @@ ko: {
   cycle:(n)=>`${n}마디 순환`, barPos:(b,n)=>`${b}/${n}마디`,
   footIntro:'스케일·화음·리듬·튜닝에 쓰인 모든 숫자는 아래 글에서 유도한 값입니다.',
   footTech:'Web Audio API · 라이브러리 없음',
+  footMade:'제작', footSrc:'소스 코드', footTrack:'완성곡',
   bar:(n)=>`${n}마디`, steps:'스텝',
   v1:{ name:'이끔음', sub:'A단조 · 126 BPM · Am – F – C – G',
     quote:'V의 B는 I의 근음 C보다 반음 아래에 있어 위로 끌린다 (이끔음). 도미넌트 7화음의 트라이톤은 사용 가능한 가장 불안정한 음정이다.',
@@ -192,6 +194,7 @@ en: {
   cycle:(n)=>`${n}-bar cycle`, barPos:(b,n)=>`bar ${b}/${n}`,
   footIntro:'Every number in the scales, chords, rhythms and tunings is derived from the article below.',
   footTech:'Web Audio API · no libraries',
+  footMade:'Made by', footSrc:'Source code', footTrack:'Finished track',
   bar:(n)=>`Bar ${n}`, steps:'steps',
   v1:{ name:'Leading Tone', sub:'A minor · 126 BPM · Am – F – C – G',
     quote:'The B in V sits one semitone below C, the root of I — the leading tone. The tritone inside a dominant seventh is the single most unstable interval available.',
@@ -1188,6 +1191,10 @@ document.getElementById('panels').innerHTML = TRACKS.map((t,i)=>{ FLAT = !!t.fla
 document.getElementById('foot').innerHTML = `
   <p>${S.footIntro}</p>
   <p><a href="https://runjs.app/blog/music-theory-for-programmers" target="_blank" rel="noopener">Music Theory for Programmers</a><span class="src">runjs.app</span></p>
+  <p><span class="lbl">${S.footMade}</span><a href="https://youtube.com/@bbanghyong" target="_blank" rel="noopener">빵형의 개발도상국</a><span class="src">YouTube</span></p>
+  <p><span class="lbl">${S.footSrc}</span><a href="https://github.com/kairess/writing-music-with-llm" target="_blank" rel="noopener">kairess/writing-music-with-llm</a><span class="src">GitHub</span></p>
+  <p><span class="lbl">${S.footTrack}</span><a href="https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie" target="_blank" rel="noopener">In The Sink (feat. Lil Woodie)</a><span class="src">SoundCloud</span></p>
+  <p class="tech">${S.footTech}</p>
   <p class="langsw">
     <a href="?lang=ko" class="${LANG==='ko'?'on':''}">한국어</a><i>·</i><a href="?lang=en" class="${LANG==='en'?'on':''}">English</a>
   </p>`;

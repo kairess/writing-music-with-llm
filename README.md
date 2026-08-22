@@ -1,5 +1,7 @@
 # Writing Music with LLM
 
+***한국어** · [English](README.en.md)*
+
 음악 이론을 **코드로** 다뤄서 실제로 들리는 음악을 만든 기록입니다.
 [Music Theory for Programmers](https://runjs.app/blog/music-theory-for-programmers) 한 편을 출발점으로,
 글에 나온 배열·공식·비율만 가지고 브라우저에서 소리를 냅니다.

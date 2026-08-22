@@ -10,7 +10,8 @@
 **만든 사람 — [빵형의 개발도상국](https://youtube.com/@bbanghyong)**
 
 🎧 **완성곡 — [In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** (SoundCloud)
-🔊 **[EDM Lab 열기](https://kairess.github.io/writing-music-with-llm/)**
+
+🔊 **[브라우저에서 미리보기](https://kairess.github.io/writing-music-with-llm/)**
 
 ---
 

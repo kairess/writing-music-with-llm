@@ -9,7 +9,8 @@ and uses only the arrays, formulas and ratios it derives. No libraries, just the
 **Made by — [빵형의 개발도상국 (Bbanghyong)](https://youtube.com/@bbanghyong)**
 
 🎧 **Finished track — [In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** (SoundCloud)
-🔊 **[Open EDM Lab](https://kairess.github.io/writing-music-with-llm/)**
+
+🔊 **[Preview in browser](https://kairess.github.io/writing-music-with-llm/)**
 
 ---
 

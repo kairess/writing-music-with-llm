@@ -8,7 +8,7 @@ and uses only the arrays, formulas and ratios it derives. No libraries, just the
 
 **Made by — [빵형의 개발도상국 (Bbanghyong)](https://youtube.com/@bbanghyong)**
 
-🎧 **Finished track — [In The Sink (feat. Lil Woodie)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** (SoundCloud)
+🎧 **Finished track — [In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** (SoundCloud)
 🔊 **[Open EDM Lab](https://kairess.github.io/writing-music-with-llm/)**
 
 ---
@@ -42,7 +42,7 @@ Tempo, structure, spectral occupancy and tonality were measured with ffmpeg + nu
 and those measurements became the arrangement constraints directly.
 
 - `beat/beat.html` — D minor, 90 BPM, 56 bars. Half-time, with the arrangement density
-  moving *inversely* to the vocal's. This work became **[In The Sink (feat. Lil Woodie)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)**
+  moving *inversely* to the vocal's. This work became **[In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)**
 - `beat/prayers-beat.html` — C tonic, 87.42 BPM, 119 bars. Locked to the acapella's measured values
 
 The measurements and the decisions that came out of them are in
@@ -123,7 +123,7 @@ audio/bando-prayers.mp3
 
 - Theory — [Music Theory for Programmers](https://runjs.app/blog/music-theory-for-programmers) (runjs.app)
 - Acapellas — [lilwoodiewood](https://www.looperman.com/acapellas/detail/24093/lil-woodie-wood-this-is-revolution-by-lilwoodiewood-90bpm-hip-hop-acapella) · [edekali](https://www.looperman.com/acapellas/detail/24110/bando-prayers-by-edekali-87bpm-hip-hop-acapella) (Looperman)
-- Finished track — [In The Sink (feat. Lil Woodie)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)
+- Finished track — [In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)
 - Made by — [빵형의 개발도상국 (Bbanghyong)](https://youtube.com/@bbanghyong)
 
 Every number in these tracks — scale arrays, chord formulas, cents, frequency ratios —

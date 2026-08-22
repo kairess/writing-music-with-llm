@@ -9,7 +9,7 @@
 
 **만든 사람 — [빵형의 개발도상국](https://youtube.com/@bbanghyong)**
 
-🎧 **완성곡 — [In The Sink (feat. Lil Woodie)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** (SoundCloud)
+🎧 **완성곡 — [In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** (SoundCloud)
 🔊 **[EDM Lab 열기](https://kairess.github.io/writing-music-with-llm/)**
 
 ---
@@ -41,7 +41,7 @@
 템포·구조·음역 점유·조성을 ffmpeg + numpy로 재고, 그 수치를 그대로 편곡 제약으로 삼았습니다.
 
 - `beat/beat.html` — D단조 90 BPM 56마디. 하프타임, 보컬 밀도의 역으로 움직이는 편곡.
-  이 작업의 결과물이 **[In The Sink (feat. Lil Woodie)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** 입니다
+  이 작업의 결과물이 **[In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)** 입니다
 - `beat/prayers-beat.html` — C 으뜸음 87.42 BPM 119마디. 아카펠라 분석값으로 고정
 
 핵심 측정과 그로부터 나온 판단은 [`notes/acapella-beat-strategy.md`](notes/acapella-beat-strategy.md)에 정리했습니다.
@@ -118,7 +118,7 @@ audio/bando-prayers.mp3
 
 - 이론 — [Music Theory for Programmers](https://runjs.app/blog/music-theory-for-programmers) (runjs.app)
 - 아카펠라 — [lilwoodiewood](https://www.looperman.com/acapellas/detail/24093/lil-woodie-wood-this-is-revolution-by-lilwoodiewood-90bpm-hip-hop-acapella) · [edekali](https://www.looperman.com/acapellas/detail/24110/bando-prayers-by-edekali-87bpm-hip-hop-acapella) (Looperman)
-- 완성곡 — [In The Sink (feat. Lil Woodie)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)
+- 완성곡 — [In The Sink (feat. Lil Woodie Wood)](https://soundcloud.com/taehee-lee-671090884/in-the-sink-feat-lil-woodie)
 - 제작 — [빵형의 개발도상국](https://youtube.com/@bbanghyong)
 
 곡의 모든 숫자 — 스케일 배열, 코드 공식, 센트, 주파수 비율 — 는 원문에서 유도한 값입니다.

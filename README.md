@@ -38,7 +38,7 @@
 템포·구조·음역 점유·조성을 ffmpeg + numpy로 재고, 그 수치를 그대로 편곡 제약으로 삼았습니다.
 
 - `beat/beat.html` — D단조 90 BPM 56마디. 하프타임, 보컬 밀도의 역으로 움직이는 편곡
-- `beat/prayers-beat.html` — 다른 아카펠라용 비트 랩
+- `beat/prayers-beat.html` — C 으뜸음 87.42 BPM 119마디. 아카펠라 분석값으로 고정
 
 핵심 측정과 그로부터 나온 판단은 [`notes/acapella-beat-strategy.md`](notes/acapella-beat-strategy.md)에 정리했습니다.
 
@@ -81,21 +81,39 @@ node tools/render-beat.js              # → audio/beat.wav
 
 ---
 
+## 아카펠라 출처
+
+비트 작업에 쓴 두 아카펠라는 [Looperman](https://www.looperman.com/)에서 받았습니다.
+
+| 트랙 | 아티스트 | 표기 BPM | 실측 |
+|---|---|---|---|
+| [lil woodie wood — this is revolution](https://www.looperman.com/acapellas/detail/24093/lil-woodie-wood-this-is-revolution-by-lilwoodiewood-90bpm-hip-hop-acapella) | lilwoodiewood | 90 | 89.88 (자기상관 179.75 = 2×) |
+| [bando prayers](https://www.looperman.com/acapellas/detail/24110/bando-prayers-by-edekali-87bpm-hip-hop-acapella) | edekali | 87 | 87.42 (7구간 독립 추정, σ 0.055) |
+
+이용 조건은 각 Looperman 페이지를 따릅니다.
+
 ## 오디오 파일은 레포에 없습니다
 
 `.gitignore`로 모든 오디오를 제외했습니다. 두 가지 이유입니다.
 
 1. **아카펠라 원본은 다른 사람의 녹음입니다.** 레포에 넣으면 그 녹음을 재배포하게 됩니다.
+   위 링크에서 직접 받으세요.
 2. **렌더 결과물은 수십 MB입니다.** git에 넣을 물건이 아니고, `tools/`로 언제든 다시 만들 수 있습니다.
 
 비트 랩을 돌리려면 `audio/` 폴더를 만들고 아카펠라를 직접 넣으세요.
 파일 이름은 각 HTML의 `<audio src>`와 맞추면 됩니다.
+
+```
+audio/lil-woodie-wood-this-is-revolution.mp3
+audio/bando-prayers.mp3
+```
 
 ---
 
 ## 출처
 
 - 이론 — [Music Theory for Programmers](https://runjs.app/blog/music-theory-for-programmers) (runjs.app)
+- 아카펠라 — [lilwoodiewood](https://www.looperman.com/acapellas/detail/24093/lil-woodie-wood-this-is-revolution-by-lilwoodiewood-90bpm-hip-hop-acapella) · [edekali](https://www.looperman.com/acapellas/detail/24110/bando-prayers-by-edekali-87bpm-hip-hop-acapella) (Looperman)
 - 제작 — [빵형의 개발도상국](https://youtube.com/@bbanghyong)
 
 곡의 모든 숫자 — 스케일 배열, 코드 공식, 센트, 주파수 비율 — 는 원문에서 유도한 값입니다.

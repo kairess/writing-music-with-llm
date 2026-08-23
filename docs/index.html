@@ -1,5 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
 <title>EDM Lab</title>
 <style>
   :root{--bg:#0b0d12;--panel:#12151d;--line:#232734;--fg:#e9eaf0;--dim:#858a9c;--acc:#7aa2ff;--hi:#ff7ab6;--go:#5ee0c0;--warn:#ffd166}
@@ -69,6 +71,26 @@
   .langsw a{cursor:pointer;border:0;color:#5b6070}
   .langsw a.on{color:var(--acc);font-weight:600}
   .langsw i{color:#333844;font-style:normal;margin:0 7px}
+  .mutehint{flex-basis:100%;margin:2px 0 0;font-size:12px;color:var(--warn);line-height:1.5}
+
+  /* 좁은 화면: 탭을 3열로 접고, 터치 대상을 키우고, 가로 스크롤을 막는다 */
+  @media (max-width:640px){
+    body{padding:22px 14px 90px;font-size:14.5px}
+    h1{font-size:22px;margin-bottom:16px}
+    .tabs{grid-template-columns:repeat(3,1fr);gap:5px}
+    .tab{padding:9px 4px;font-size:12px}
+    .transport{padding:11px 12px;gap:9px}
+    button{flex:1;min-width:0;padding:14px 16px}
+    .now{margin-left:0;flex-basis:100%;font-size:12px}
+    h2{font-size:18px}
+    .strip,.notes{gap:4px}
+    .cell2{padding:9px 2px;font-size:12px}
+    .n{padding:8px 1px;font-size:13px}
+    .grid16{grid-template-columns:38px repeat(16,1fr);gap:2px}
+    .lb{font-size:9px}
+    table{display:block;overflow-x:auto}   /* 표는 잘리지 말고 표 안에서 스크롤 */
+    .harm{height:88px}
+  }
 </style>
 
 <h1>EDM Lab</h1>
@@ -81,6 +103,7 @@
     BPM <input id="bpm" type="range" min="90" max="145" style="width:110px"><span id="bpmv"></span>
   </label>
   <span class="now" id="nowline"></span>
+  <p class="mutehint" id="mutehint" hidden></p>
 </div>
 
 <div id="panels"></div>
@@ -109,6 +132,7 @@ ko: {
   footIntro:'스케일·화음·리듬·튜닝에 쓰인 모든 숫자는 아래 글에서 유도한 값입니다.',
   footTech:'Web Audio API · 라이브러리 없음',
   footMade:'제작', footSrc:'소스 코드', footTrack:'완성곡',
+  muteHint:'소리가 안 나면 아이폰 측면의 무음 스위치를 꺼주세요. (iOS 16.3 이하는 무음 스위치가 켜져 있으면 Web Audio 소리가 나오지 않습니다)',
   bar:(n)=>`${n}마디`, steps:'스텝',
   v1:{ name:'이끔음', sub:'A단조 · 126 BPM · Am – F – C – G',
     quote:'V의 B는 I의 근음 C보다 반음 아래에 있어 위로 끌린다 (이끔음). 도미넌트 7화음의 트라이톤은 사용 가능한 가장 불안정한 음정이다.',
@@ -195,6 +219,7 @@ en: {
   footIntro:'Every number in the scales, chords, rhythms and tunings is derived from the article below.',
   footTech:'Web Audio API · no libraries',
   footMade:'Made by', footSrc:'Source code', footTrack:'Finished track',
+  muteHint:'No sound? Turn off the silent switch on the side of your iPhone. (On iOS 16.3 and older, Web Audio is muted by that switch.)',
   bar:(n)=>`Bar ${n}`, steps:'steps',
   v1:{ name:'Leading Tone', sub:'A minor · 126 BPM · Am – F – C – G',
     quote:'The B in V sits one semitone below C, the root of I — the leading tone. The tritone inside a dominant seventh is the single most unstable interval available.',
@@ -334,8 +359,22 @@ function makeSoftClip() {
   ws.curve = curve; ws.oversample = '4x';
   return ws;
 }
+// ── 모바일 ────────────────────────────────────────────────────────────────
+// iOS는 Web Audio를 "벨소리" 오디오 세션으로 보낸다 → 측면 무음 스위치가 켜져 있으면
+// 볼륨을 아무리 올려도 소리가 안 난다. 'playback'을 요구하면 "미디어" 세션으로 바뀌어
+// 무음 스위치를 무시한다. (Safari 16.4+ / Chrome Android는 무해하게 무시)
+function claimPlaybackSession() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+}
+// 전화·화면잠금 후 iOS는 컨텍스트를 'interrupted'로 두고 스스로 깨어나지 않는다.
+function wakeCtx() {
+  if (ctx && ctx.state !== 'running') Promise.resolve(ctx.resume()).catch(() => {});
+}
 function initAudio() {
+  claimPlaybackSession();
   ctx = new (window.AudioContext || window.webkitAudioContext)();
+  ctx.onstatechange = () => { if (timer) wakeCtx(); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && timer) wakeCtx(); });
   // master → comp(리미터) → softclip → out → 스피커
   comp = ctx.createDynamicsCompressor();
   comp.threshold.value = -6; comp.ratio.value = 3; comp.knee.value = 6;
@@ -1243,7 +1282,8 @@ function paint(force) {
 function play() {
   if (timer) return;
   if (!ctx) initAudio();
-  ctx.resume();
+  claimPlaybackSession();
+  Promise.resolve(ctx.resume()).catch(() => {});
   openSession(cur.reverb);
   beat = 60 / +document.getElementById('bpm').value;
   bar = 0;
@@ -1270,6 +1310,14 @@ function syncBtn() {
   b.classList.toggle('playing', !!timer);
 }
 document.getElementById('toggle').onclick = () => (timer ? stop() : play());
+// iOS 16.3 이하에는 audioSession API가 없어 무음 스위치를 우회할 방법이 없다 → 안내만 띄운다
+(function mobileHint(){
+  const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!iOS || navigator.audioSession) return;
+  const el = document.getElementById('mutehint');
+  el.textContent = S.muteHint; el.hidden = false;
+})();
 document.getElementById('bpm').oninput = (e) => {
   document.getElementById('bpmv').textContent = e.target.value;
   if (timer) { stop(); play(); }
